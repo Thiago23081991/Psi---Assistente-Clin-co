@@ -1,18 +1,57 @@
-import React from 'react';
-import { Copy, Check, FileCheck, AlertTriangle } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { Copy, Check, FileCheck, AlertTriangle, Download } from 'lucide-react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 interface ReportViewProps {
   report: string | null;
+  doctorName?: string;
 }
 
-const ReportView: React.FC<ReportViewProps> = ({ report }) => {
-  const [copied, setCopied] = React.useState(false);
+const ReportView: React.FC<ReportViewProps> = ({ report, doctorName = "Dr(a). Psicólogo" }) => {
+  const [copied, setCopied] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+  const [crp, setCrp] = useState(localStorage.getItem('psiAssistant_crp') || '');
+  const printRef = useRef<HTMLDivElement>(null);
 
   const handleCopy = () => {
     if (report) {
       navigator.clipboard.writeText(report);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  const handleDownloadPDF = async () => {
+    if (!printRef.current) return;
+    
+    setIsExporting(true);
+    try {
+      const element = printRef.current;
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff'
+      });
+      
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Prontuario_Sessao_${new Date().getTime()}.pdf`);
+    } catch (error) {
+      console.error('Erro ao gerar PDF', error);
+      alert('Não foi possível gerar o PDF da sessão.');
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -81,31 +120,91 @@ const ReportView: React.FC<ReportViewProps> = ({ report }) => {
           {hasCriticalAlert ? <AlertTriangle className="h-5 w-5" /> : <FileCheck className="h-5 w-5 text-teal-600" />}
           Relatório Gerado
         </h2>
-        <button
-          onClick={handleCopy}
-          className="text-sm flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-white hover:shadow-sm transition-all text-slate-600 font-medium"
-        >
-          {copied ? (
-            <>
-              <Check className="h-4 w-4 text-green-600" />
-              <span className="text-green-600 hidden md:inline">Copiado</span>
-            </>
-          ) : (
-            <>
-              <Copy className="h-4 w-4" />
-              <span className="hidden md:inline">Copiar</span>
-            </>
-          )}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleDownloadPDF}
+            disabled={isExporting}
+            className="text-sm flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-slate-200 transition-all text-slate-700 font-medium disabled:opacity-50"
+          >
+            {isExporting ? (
+                 <svg className="animate-spin h-4 w-4 text-slate-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            ) : (
+                <Download className="h-4 w-4" />
+            )}
+            <span className="hidden md:inline">{isExporting ? 'Gerando...' : 'PDF'}</span>
+          </button>
+          
+          <button
+            onClick={handleCopy}
+            className="text-sm flex items-center gap-1.5 px-3 py-1.5 rounded-md hover:bg-white hover:shadow-sm transition-all text-slate-600 font-medium bg-slate-100"
+          >
+            {copied ? (
+              <>
+                <Check className="h-4 w-4 text-green-600" />
+                <span className="text-green-600 hidden md:inline">Copiado</span>
+              </>
+            ) : (
+              <>
+                <Copy className="h-4 w-4" />
+                <span className="hidden md:inline">Copiar</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
       
-      <div className="flex-1 overflow-y-auto p-4 md:p-8 bg-white">
-         <div className="prose prose-slate max-w-none">
-            {formattedContent}
+      <div className="flex-1 overflow-y-auto bg-slate-200/50 p-4 md:p-8 flex justify-center">
+         {/* A4 Paper wrapper for visual PDF context */}
+         <div 
+             ref={printRef}
+             className="bg-white p-8 md:p-12 shadow-md w-full max-w-[210mm] min-h-[297mm] mx-auto text-slate-800"
+             style={{ 
+                 fontFamily: '"Inter", sans-serif',
+             }}
+         >
+             
+             {/* Simple Header for PDF */}
+             <div className="border-b-2 border-slate-800 pb-4 mb-8 flex justify-between items-end">
+                <div>
+                   <h1 className="text-2xl font-bold tracking-tight text-slate-900">PsiAI</h1>
+                   <p className="text-sm text-slate-500 font-medium">Registro Clínico</p>
+                </div>
+                <div className="text-right">
+                   <p className="text-xs text-slate-400">Gerado eletronicamente em {new Date().toLocaleDateString('pt-BR')}</p>
+                </div>
+             </div>
+
+             <div className="prose prose-slate max-w-none">
+                {formattedContent}
+             </div>
+             
+             <div className="mt-20 pt-8 border-t border-slate-200">
+                <div className="w-80 mx-auto border-b border-slate-800 mb-2"></div>
+                <p className="text-center text-base font-bold text-slate-800 uppercase">{doctorName}</p>
+                <p className="text-center text-sm font-semibold text-slate-600 mb-4">Psicólogo(a) Clínico(a) {crp && `- CRP: ${crp}`}</p>
+                <p className="text-center text-xs text-slate-500 mt-1">Este documento é confidencial e protegido por sigilo profissional.</p>
+             </div>
          </div>
-         
-         <div className="mt-8 pt-6 border-t border-slate-100 text-xs text-slate-400 italic text-center">
-            Este relatório foi gerado por IA como suporte. A validação final e assinatura são responsabilidade exclusiva do profissional de saúde.
+      </div>
+
+      {/* Editor footer where we can add the CRP for the next PDF generations */}
+      <div className="p-4 border-t border-slate-100 bg-slate-50 flex flex-col sm:flex-row justify-between items-center text-xs text-slate-500">
+         <span className="mb-2 sm:mb-0">A validação e assinatura são responsabilidade exclusiva do profissional.</span>
+         <div className="flex items-center gap-2">
+            <span className="font-medium text-slate-600">Seu CRP:</span>
+            <input 
+              type="text" 
+              placeholder="00/00000" 
+              value={crp}
+              onChange={(e) => {
+                  setCrp(e.target.value);
+                  localStorage.setItem('psiAssistant_crp', e.target.value);
+              }}
+              className="px-2 py-1 border border-slate-300 rounded text-xs w-24 outline-none focus:border-teal-500"
+            />
          </div>
       </div>
     </div>

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { TherapeuticApproach, ReportTemplate } from '../types';
-import { Sparkles, FileText, Eraser, Settings } from 'lucide-react';
+import { Sparkles, FileText, Eraser, Settings, Mic, MicOff } from 'lucide-react';
 import RichTextEditor from './RichTextEditor';
 
 interface InputFormProps {
@@ -22,6 +22,70 @@ const InputForm: React.FC<InputFormProps> = ({
 }) => {
   const [notes, setNotes] = useState('');
   const [approach, setApproach] = useState<string>(TherapeuticApproach.TCC);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  useEffect(() => {
+    // Initialize Web Speech API if supported
+    // @ts-ignore
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = true;
+      recognitionRef.current.lang = 'pt-BR';
+
+      recognitionRef.current.onresult = (event: any) => {
+        let currentTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          currentTranscript += event.results[i][0].transcript;
+        }
+        
+        // Append newly recognized text. In a complex editor, we might need to handle 
+        // cursor position or interim vs final results better, but appending works for notes.
+        if (event.results[event.results.length - 1].isFinal) {
+           setNotes((prevNotes) => {
+               // Add a space if there's already text and it doesn't end with a space or newline
+               const separator = prevNotes && !prevNotes.match(/(\\s|<br>)$/) ? ' ' : '';
+               return prevNotes + separator + currentTranscript;
+           });
+        }
+      };
+
+      recognitionRef.current.onerror = (event: any) => {
+        console.error("Speech recognition error", event.error);
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onend = () => {
+        // Automatically restarts if we still want to be listening (handles short pauses)
+        if (isListening) {
+           recognitionRef.current?.start();
+        }
+      };
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, [isListening]);
+
+  const toggleListen = () => {
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+    } else {
+      if (!recognitionRef.current) {
+        alert("Seu navegador não suporta Gravação de Áudio nativa. Tente usar o Google Chrome.");
+        return;
+      }
+      setNotes((prev) => prev ? prev + "<br><br><i>[Transcrição de Áudio]</i><br>" : "<i>[Transcrição de Áudio]</i><br>");
+      recognitionRef.current.start();
+      setIsListening(true);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,13 +101,29 @@ const InputForm: React.FC<InputFormProps> = ({
           <FileText className="h-5 w-5 text-slate-500" />
           Notas da Sessão
         </h2>
-        <button 
-          onClick={() => setNotes('')}
-          className="text-xs text-slate-500 hover:text-red-500 flex items-center gap-1 transition-colors"
-          disabled={isAnalyzing}
-        >
-          <Eraser className="h-3 w-3" /> Limpar
-        </button>
+        <div className="flex gap-3">
+            <button 
+              onClick={toggleListen}
+              className={`text-xs flex items-center gap-1.5 px-3 py-1.5 rounded-full font-medium transition-all shadow-sm ${
+                isListening 
+                  ? 'bg-red-100 text-red-700 animate-pulse ring-2 ring-red-400 border border-red-200' 
+                  : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+              }`}
+            >
+              {isListening ? (
+                  <><MicOff className="h-3.5 w-3.5" /> Parar Gravação</>
+              ) : (
+                  <><Mic className="h-3.5 w-3.5 text-red-500" /> Gravar Resumo</>
+              )}
+            </button>
+            <button 
+              onClick={() => setNotes('')}
+              className="text-xs text-slate-500 hover:text-red-500 flex items-center gap-1 transition-colors px-2"
+              disabled={isAnalyzing}
+            >
+              <Eraser className="h-3 w-3" /> Limpar
+            </button>
+        </div>
       </div>
       
       <div className="p-5 flex-1 flex flex-col gap-4">
