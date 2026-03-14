@@ -1,0 +1,82 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A doctor using the platform.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "createdAt"]
+    },
+    "Patient": {
+      "title": "Patient",
+      "description": "A patient belonging to a doctor.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "birthDate": { "type": "string" },
+        "age": { "type": "string" },
+        "height": { "type": "string" },
+        "weight": { "type": "string" },
+        "context": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "name", "createdAt"]
+    },
+    "SessionRecord": {
+      "title": "SessionRecord",
+      "description": "A therapy session record.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "patientId": { "type": "string" },
+        "date": { "type": "string", "format": "date-time" },
+        "rawNotes": { "type": "string" },
+        "generatedReport": { "type": "string" },
+        "approach": { "type": "string" },
+        "templateName": { "type": "string" }
+      },
+      "required": ["id", "patientId", "date", "rawNotes"]
+    },
+    "ScheduledSession": {
+      "title": "ScheduledSession",
+      "description": "A scheduled therapy session.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "patientId": { "type": "string" },
+        "date": { "type": "string" },
+        "time": { "type": "string" },
+        "duration": { "type": "number" },
+        "status": { "type": "string", "enum": ["scheduled", "completed", "cancelled"] },
+        "reminderSent": { "type": "boolean" },
+        "reminderSentAt": { "type": "string", "format": "date-time" },
+        "notes": { "type": "string" }
+      },
+      "required": ["id", "patientId", "date", "time", "duration", "status", "reminderSent"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Doctors using the app."
+    },
+    "/users/{userId}/patients/{patientId}": {
+      "schema": { "$ref": "#/entities/Patient" },
+      "description": "Patients belonging to a doctor."
+    },
+    "/users/{userId}/sessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/SessionRecord" },
+      "description": "Session records belonging to a doctor."
+    },
+    "/users/{userId}/scheduled_sessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/ScheduledSession" },
+      "description": "Scheduled sessions belonging to a doctor."
+    }
+  }
+}

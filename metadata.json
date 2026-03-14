@@ -1,0 +1,5 @@
+{
+  "name": "PsiAI - Assistente Clínico",
+  "description": "Assistente inteligente para psicólogos e terapeutas gerarem relatórios estruturados a partir de anotações de sessões.",
+  "requestFramePermissions": []
+}

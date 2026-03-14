@@ -1,0 +1,70 @@
+export interface SessionData {
+  id: string;
+  patientName: string;
+  date: string;
+  notes: string;
+  approach: string;
+  report?: string;
+  isLoading?: boolean;
+}
+
+export interface ReportTemplate {
+  id: string;
+  name: string;
+  structure: string;
+  isDefault?: boolean;
+}
+
+export interface AnalysisRequest {
+  notes: string;
+  approach: string;
+  patientContext?: string;
+  templateStructure: string;
+}
+
+export interface Patient {
+  id: string;
+  name: string;
+  phoneNumber?: string;
+  age?: string;
+  birthDate?: string;
+  height?: string;
+  weight?: string;
+  context: string;
+  createdAt: string;
+}
+
+export interface SessionRecord {
+  id: string;
+  patientId: string;
+  date: string;
+  rawNotes: string;
+  generatedReport: string;
+  approach: string;
+  templateName: string;
+}
+
+export interface ScheduledSession {
+  id: string;
+  patientId: string;
+  date: string; // YYYY-MM-DD
+  time: string; // HH:MM
+  duration: number; // minutes
+  status: 'scheduled' | 'completed' | 'cancelled';
+  notes?: string;
+  reminderSent?: boolean;
+  reminderSentAt?: string; // ISO Date String
+}
+
+export enum TherapeuticApproach {
+  TCC = 'Terapia Cognitivo-Comportamental (TCC)',
+  Psicanalise = 'Psicanálise (Freudiana/Lacaniana)',
+  Analitica = 'Psicologia Analítica (Junguiana)',
+  Humanista = 'Humanista / Centrada na Pessoa',
+  Gestalt = 'Gestalt-Terapia',
+  Sistemica = 'Sistêmica / Familiar',
+  Integrativa = 'Terapia Integrativa',
+  Transpessoal = 'Psicologia Transpessoal',
+  Fenomenologica = 'Fenomenológica-Existencial',
+  Comportamental = 'Análise do Comportamento (ABA/Behaviorismo)'
+}
