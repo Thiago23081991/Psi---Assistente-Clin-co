@@ -179,7 +179,7 @@ const ScheduledSessions: React.FC<ScheduledSessionsProps> = ({ onStartSession })
       setSendingSessionId(session.id);
 
       try {
-          const dateStr = new Date(session.date).toLocaleDateString('pt-BR');
+          const dateStr = new Date(session.date + 'T12:00:00').toLocaleDateString('pt-BR');
           let textMsg = `Olá ${patient.name}, lembrando da nossa sessão agendada para amanhã, ${dateStr} às ${session.time}.`;
           
           if (session.isOnline && session.meetLink) {
@@ -221,7 +221,7 @@ const ScheduledSessions: React.FC<ScheduledSessionsProps> = ({ onStartSession })
       const cleanPhone = patient.phoneNumber.replace(/\D/g, '');
       const phone = cleanPhone.length <= 11 ? `55${cleanPhone}` : cleanPhone;
       
-      const dateStr = new Date(session.date).toLocaleDateString('pt-BR');
+      const dateStr = new Date(session.date + 'T12:00:00').toLocaleDateString('pt-BR');
       
       let message = '';
       if (type === 'confirm') {
@@ -327,7 +327,7 @@ const ScheduledSessions: React.FC<ScheduledSessionsProps> = ({ onStartSession })
                                     <div className="flex items-center gap-3 text-sm text-slate-500 mt-1">
                                         <span className="flex items-center gap-1">
                                             <Calendar className="h-3.5 w-3.5" /> 
-                                            {new Date(session.date).toLocaleDateString()}
+                                            {new Date(session.date + 'T12:00:00').toLocaleDateString('pt-BR')}
                                         </span>
                                         <span className="flex items-center gap-1">
                                             <Clock className="h-3.5 w-3.5" /> 
@@ -497,7 +497,7 @@ const ScheduledSessions: React.FC<ScheduledSessionsProps> = ({ onStartSession })
                     <div key={session.id} className={`p-3 rounded-lg border text-sm flex justify-between items-center ${getStatusColor(session.status)}`}>
                         <div className="min-w-0">
                             <p className="font-medium truncate">{getPatientName(session.patientId)}</p>
-                            <p className="text-xs opacity-80">{new Date(session.date).toLocaleDateString()} às {session.time}</p>
+                            <p className="text-xs opacity-80">{new Date(session.date + 'T12:00:00').toLocaleDateString('pt-BR')} às {session.time}</p>
                             {session.notes && (
                                 <p className="text-[10px] mt-1 text-slate-500 italic truncate max-w-[200px]">
                                     {session.notes}

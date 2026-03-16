@@ -169,7 +169,7 @@ const PatientHistory: React.FC = () => {
                       <div className="flex justify-between items-start mb-2">
                         <div className="flex items-center gap-2 text-sm font-medium text-slate-800">
                           <Calendar className="h-3.5 w-3.5 text-teal-600" />
-                          {new Date(session.date).toLocaleDateString()}
+                          {new Date(session.date + 'T12:00:00').toLocaleDateString('pt-BR')}
                         </div>
                         <button 
                            onClick={(e) => handleDeleteSession(e, session.id)}
@@ -209,7 +209,7 @@ const PatientHistory: React.FC = () => {
                                 <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
                             </button>
                             <span className="text-sm font-semibold text-slate-800">
-                                {new Date(selectedSession.date).toLocaleDateString()}
+                                {new Date(selectedSession.date + 'T12:00:00').toLocaleDateString('pt-BR')}
                             </span>
                             <div className="w-8"></div> {/* Spacer for centering */}
                         </div>

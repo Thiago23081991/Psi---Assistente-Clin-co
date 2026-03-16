@@ -385,7 +385,7 @@ const PatientCRM: React.FC = () => {
                                 <p className="text-slate-500 text-sm flex flex-wrap gap-4 mt-2">
                                     {selectedPatient.phoneNumber && <span className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" /> {selectedPatient.phoneNumber}</span>}
                                     {selectedPatient.age && <span className="flex items-center gap-1.5"><User className="h-3.5 w-3.5" /> {selectedPatient.age} anos</span>}
-                                    <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> Desde {new Date(selectedPatient.createdAt).toLocaleDateString('pt-BR')}</span>
+                                    <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" /> Desde {new Date(selectedPatient.createdAt + (selectedPatient.createdAt.includes('T') ? '' : 'T12:00:00')).toLocaleDateString('pt-BR')}</span>
                                 </p>
                             </div>
 
@@ -463,7 +463,7 @@ const PatientCRM: React.FC = () => {
                                     <div>
                                         <div className="flex text-lg font-bold text-slate-800 items-center gap-2">
                                             <Calendar className="h-4 w-4 text-slate-400" />
-                                            Sessão de {new Date(session.date).toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                            Sessão de {new Date(session.date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                                         </div>
                                         <div className="text-sm font-medium text-teal-600 mt-1 uppercase tracking-wider">{session.approach}</div>
                                     </div>

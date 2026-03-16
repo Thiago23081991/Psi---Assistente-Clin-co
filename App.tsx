@@ -152,7 +152,7 @@ function App() {
     if (currentPatient) {
         const demos = [];
         if (currentPatient.age) demos.push(`Idade: ${currentPatient.age} anos`);
-        if (currentPatient.birthDate) demos.push(`Data de Nasc.: ${new Date(currentPatient.birthDate).toLocaleDateString('pt-BR')}`);
+        if (currentPatient.birthDate) demos.push(`Data de Nasc.: ${new Date(currentPatient.birthDate + 'T12:00:00').toLocaleDateString('pt-BR')}`);
         if (currentPatient.height) demos.push(`Altura: ${currentPatient.height}cm`);
         if (currentPatient.weight) demos.push(`Peso: ${currentPatient.weight}kg`);
         
