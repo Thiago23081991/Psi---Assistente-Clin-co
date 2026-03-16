@@ -25,7 +25,7 @@ export const analyzeSessionNotes = async (request: AnalysisRequest): Promise<str
         return "⚠️ Chave de API (VITE_GEMINI_API_KEY) não encontrada. Peça ao administrador para configurar as variáveis de ambiente na Vercel.";
     }
 
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${API_KEY}`;
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${API_KEY}`;
 
     const promptText = `
         Analise as seguintes anotações da sessão clínica:
