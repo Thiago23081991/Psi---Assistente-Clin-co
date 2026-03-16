@@ -32,8 +32,11 @@ const PatientCRM: React.FC = () => {
 
   const handleSaveProfile = async () => {
       if (editedPatient) {
+          // Atualiza o banco de dados
           await savePatient(editedPatient);
           setIsEditing(false);
+          // Atualiza a seleção local imediatamente para evitar "piscar" ou não atualizar
+          setSelectedPatientId(editedPatient.id);
       }
   };
 
@@ -211,7 +214,7 @@ const PatientCRM: React.FC = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-teal-50/30 p-5 rounded-xl border border-teal-100 mb-6">
                             <div className="col-span-1 md:col-span-2">
                                 <label className="block text-xs font-medium text-slate-700 mb-1">Nome Completo</label>
-                                <input type="text" value={editedPatient?.name} onChange={e => setEditedPatient(prev => prev ? {...prev, name: e.target.value} : null)} className="w-full text-sm p-2 border border-slate-300 rounded focus:ring-teal-500 focus:border-teal-500 outline-none" />
+                                <input type="text" value={editedPatient?.name || ''} onChange={e => setEditedPatient(prev => prev ? {...prev, name: e.target.value} : null)} className="w-full text-sm p-2 border border-slate-300 rounded focus:ring-teal-500 focus:border-teal-500 outline-none" />
                             </div>
                             <div>
                                 <label className="block text-xs font-medium text-slate-700 mb-1">Telefone</label>
@@ -224,6 +227,13 @@ const PatientCRM: React.FC = () => {
                             <div className="col-span-1 md:col-span-2">
                                 <label className="block text-xs font-medium text-slate-700 mb-1">Hipótese Diagnóstica / Foco Clínico</label>
                                 <input type="text" value={editedPatient?.diagnosticHypothesis || ''} onChange={e => setEditedPatient(prev => prev ? {...prev, diagnosticHypothesis: e.target.value} : null)} className="w-full text-sm p-2 border border-slate-300 rounded focus:ring-teal-500 focus:border-teal-500 outline-none" placeholder="Ex: TAG, TDAH, Transtorno Misto..." />
+                            </div>
+                            <div className="col-span-1 md:col-span-2">
+                                <label className="block text-xs font-medium text-slate-700 mb-1">Status do Paciente</label>
+                                <select value={editedPatient?.status || 'active'} onChange={e => setEditedPatient(prev => prev ? {...prev, status: e.target.value as 'active'|'inactive'} : null)} className="w-full text-sm p-2 border border-slate-300 rounded focus:ring-teal-500 focus:border-teal-500 outline-none">
+                                    <option value="active">Ativo (Em acompanhamento)</option>
+                                    <option value="inactive">Inativo (Alta / Interrompeu)</option>
+                                </select>
                             </div>
                         </div>
                     )}
