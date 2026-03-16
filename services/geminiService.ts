@@ -2,9 +2,8 @@ import { AnalysisRequest } from "../types";
 
 export const analyzeSessionNotes = async (request: AnalysisRequest): Promise<string> => {
   try {
-    // In production, this URL should be replaced by your deployed Firebase Function URL
-    // e.g., 'https://us-central1-YOUR_PROJECT_ID.cloudfunctions.net/analyzeSession'
-    const CLOUD_FUNCTION_URL = 'http://127.0.0.1:5001/psiai---assistente-clínico/us-central1/analyzeSession'; 
+    // Using the verified production URL for the deployed Google Cloud Function
+    const CLOUD_FUNCTION_URL = 'https://us-central1-psiai-17df8.cloudfunctions.net/analyzeSession';
 
     const response = await fetch(CLOUD_FUNCTION_URL, {
       method: 'POST',
