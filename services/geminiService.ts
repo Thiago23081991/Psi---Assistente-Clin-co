@@ -1,3 +1,5 @@
+import { AnalysisRequest } from "../types";
+
 export const analyzeSessionNotes = async (request: AnalysisRequest): Promise<string> => {
   try {
     // Usando Rota de API Severless da Vercel (Mesma origem do app React)
