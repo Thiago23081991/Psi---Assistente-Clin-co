@@ -60,6 +60,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
               // Decrypt sensitive fields
               name: await cryptoService.decrypt(p.name, user.uid),
               phoneNumber: p.phoneNumber ? await cryptoService.decrypt(p.phoneNumber, user.uid) : p.phoneNumber,
+              emergencyContact: p.emergencyContact ? await cryptoService.decrypt(p.emergencyContact, user.uid) : p.emergencyContact,
+              diagnosticHypothesis: p.diagnosticHypothesis ? await cryptoService.decrypt(p.diagnosticHypothesis, user.uid) : p.diagnosticHypothesis,
               context: await cryptoService.decrypt(p.context, user.uid),
           };
       }));
@@ -100,6 +102,8 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         ...patient,
         name: await cryptoService.encrypt(patient.name, user.uid),
         phoneNumber: patient.phoneNumber ? await cryptoService.encrypt(patient.phoneNumber, user.uid) : patient.phoneNumber,
+        emergencyContact: patient.emergencyContact ? await cryptoService.encrypt(patient.emergencyContact, user.uid) : patient.emergencyContact,
+        diagnosticHypothesis: patient.diagnosticHypothesis ? await cryptoService.encrypt(patient.diagnosticHypothesis, user.uid) : patient.diagnosticHypothesis,
         context: await cryptoService.encrypt(patient.context, user.uid),
     };
     

@@ -26,12 +26,15 @@ export interface Patient {
   id: string;
   name: string;
   phoneNumber?: string;
+  emergencyContact?: string;
   age?: string;
   birthDate?: string;
   height?: string;
   weight?: string;
+  diagnosticHypothesis?: string;
   context: string;
   createdAt: string;
+  status?: 'active' | 'inactive';
 }
 
 export interface SessionRecord {

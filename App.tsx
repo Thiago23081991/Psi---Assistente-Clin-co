@@ -3,6 +3,7 @@ import InputForm from './components/InputForm';
 import ReportView from './components/ReportView';
 import TemplateManager from './components/TemplateManager';
 import PatientHistory from './components/PatientHistory';
+import PatientCRM from './components/PatientCRM';
 import ScheduledSessions from './components/ScheduledSessions';
 import Remarketing from './components/Remarketing';
 import RichTextEditor from './components/RichTextEditor';
@@ -11,7 +12,7 @@ import { analyzeSessionNotes } from './services/geminiService';
 import { notificationService } from './services/notificationService';
 import { useData } from './contexts/DataContext';
 import { AnalysisRequest, ReportTemplate, Patient, SessionRecord, TherapeuticApproach } from './types';
-import { Plus, Users, History, Save, Calculator, Calendar as CalendarIcon, Ruler, Weight, CalendarCheck, Phone, TrendingUp, BrainCircuit, Menu, X, FileText, LogOut } from 'lucide-react';
+import { Plus, Users, History, Save, CalendarCheck, TrendingUp, BrainCircuit, Menu, X, FileText, LogOut, LayoutList } from 'lucide-react';
 import { auth } from './firebase';
 
 // Default Templates
@@ -105,7 +106,7 @@ Conduta, ajustes no tratamento, tarefas de casa e agendamento.`
   }
 ];
 
-type Tab = 'new' | 'history' | 'schedule' | 'remarketing';
+type Tab = 'new' | 'crm' | 'history' | 'schedule' | 'remarketing';
 
 function App() {
   const { user, patients, loading, savePatient, saveSession } = useData();
@@ -329,8 +330,9 @@ function App() {
         <div className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
           <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3 px-2">Menu Principal</div>
           <NavItem icon={Plus} label="Nova Sessão" tab="new" />
+          <NavItem icon={Users} label="CRM Pacientes" tab="crm" activeColor="text-blue-700 bg-blue-50" />
           <NavItem icon={CalendarCheck} label="Agenda" tab="schedule" />
-          <NavItem icon={History} label="Histórico" tab="history" />
+          <NavItem icon={History} label="Consultar Histórico" tab="history" />
           
           <div className="mt-8 mb-3 px-2">
             <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Marketing</div>
@@ -384,8 +386,9 @@ function App() {
           <div className="bg-white h-full w-64 shadow-xl flex flex-col animate-fadeIn">
             <div className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
               <NavItem icon={Plus} label="Nova Sessão" tab="new" />
+              <NavItem icon={Users} label="CRM Pacientes" tab="crm" activeColor="text-blue-700 bg-blue-50" />
               <NavItem icon={CalendarCheck} label="Agenda" tab="schedule" />
-              <NavItem icon={History} label="Histórico" tab="history" />
+              <NavItem icon={History} label="Histórico (Busca)" tab="history" />
               <div className="my-4 border-t border-slate-100"></div>
               <NavItem icon={TrendingUp} label="Remarketing" tab="remarketing" activeColor="text-orange-700 bg-orange-50" />
             </div>
@@ -610,6 +613,10 @@ function App() {
                 </div>
             )}
             
+            {activeTab === 'crm' && (
+                <PatientCRM />
+            )}
+
             {activeTab === 'schedule' && (
                 <ScheduledSessions onStartSession={handleStartScheduledSession} />
             )}
