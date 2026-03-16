@@ -64,7 +64,7 @@ const ScheduledSessions: React.FC<ScheduledSessionsProps> = ({ onStartSession })
     setSessions(loadedSessions);
   }, [scheduledSessions]);
 
-  const handleSave = async () => {
+  const handleSave = async (andSend: boolean = false) => {
     if (!selectedPatientId || !date || !time) return;
 
     let sessionToSave: ScheduledSession;
@@ -102,6 +102,10 @@ const ScheduledSessions: React.FC<ScheduledSessionsProps> = ({ onStartSession })
 
     await saveScheduledSession(sessionToSave);
     handleCloseModal();
+
+    if (andSend) {
+        handleManualWhatsApp(sessionToSave, 'confirm');
+    }
   };
 
   const handleEdit = (session: ScheduledSession) => {
@@ -600,13 +604,23 @@ const ScheduledSessions: React.FC<ScheduledSessionsProps> = ({ onStartSession })
                       />
                   </div>
 
-                  <button 
-                    onClick={handleSave}
-                    disabled={!selectedPatientId || !date || !time}
-                    className="w-full mt-4 bg-teal-600 text-white py-2.5 rounded-lg font-medium hover:bg-teal-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
-                  >
-                      {editingSessionId ? 'Salvar Alterações' : 'Confirmar Agendamento'}
-                  </button>
+                  <div className="flex flex-col gap-2 mt-4">
+                      <button 
+                        onClick={() => handleSave(true)}
+                        disabled={!selectedPatientId || !date || !time}
+                        className="w-full bg-green-600 text-white py-2.5 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 shadow-sm"
+                      >
+                          <Send className="h-4 w-4" /> 
+                          {editingSessionId ? 'Salvar e Avisar no WhatsApp' : 'Agendar e Enviar Link no WhatsApp'}
+                      </button>
+                      <button 
+                        onClick={() => handleSave(false)}
+                        disabled={!selectedPatientId || !date || !time}
+                        className="w-full bg-slate-100 text-slate-600 py-2.5 rounded-lg font-medium hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+                      >
+                          {editingSessionId ? 'Apenas Salvar Alterações' : 'Apenas Salvar Agendamento'}
+                      </button>
+                  </div>
               </div>
            </div>
         </div>

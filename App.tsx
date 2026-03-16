@@ -120,16 +120,6 @@ function App() {
   
   // Patient State
   const [currentPatient, setCurrentPatient] = useState<Patient | null>(null);
-  const [isCreatingPatient, setIsCreatingPatient] = useState(false);
-  
-  // New Patient Form State
-  const [newPatientName, setNewPatientName] = useState('');
-  const [newPatientPhone, setNewPatientPhone] = useState('');
-  const [newPatientBirthDate, setNewPatientBirthDate] = useState('');
-  const [newPatientAge, setNewPatientAge] = useState('');
-  const [newPatientHeight, setNewPatientHeight] = useState('');
-  const [newPatientWeight, setNewPatientWeight] = useState('');
-  const [newPatientContext, setNewPatientContext] = useState('');
 
   // Template State
   const [templates, setTemplates] = useState<ReportTemplate[]>(DEFAULT_TEMPLATES);
@@ -147,59 +137,6 @@ function App() {
 
     return () => clearInterval(interval);
   }, []);
-
-  const calculateAge = (dob: string) => {
-    if (!dob) return;
-    const birthDate = new Date(dob);
-    const today = new Date();
-    let age = today.getFullYear() - birthDate.getFullYear();
-    const m = today.getMonth() - birthDate.getMonth();
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--;
-    }
-    setNewPatientAge(age.toString());
-  };
-
-  const handleCreatePatient = async () => {
-    if (!newPatientName.trim()) return;
-    
-    const newPatient: Patient = {
-        id: Date.now().toString(),
-        name: newPatientName,
-        phoneNumber: newPatientPhone,
-        birthDate: newPatientBirthDate,
-        age: newPatientAge,
-        height: newPatientHeight,
-        weight: newPatientWeight,
-        context: newPatientContext,
-        createdAt: new Date().toISOString(),
-        status: 'active'
-    };
-    
-    try {
-        await savePatient(newPatient);
-        
-        setCurrentPatient(newPatient);
-        if (report) {
-            setIsReportSaved(false);
-        }
-        setIsCreatingPatient(false);
-        
-        // Reset form
-        setNewPatientName('');
-        setNewPatientPhone('');
-        setNewPatientBirthDate('');
-        setNewPatientAge('');
-        setNewPatientHeight('');
-        setNewPatientWeight('');
-        setNewPatientContext('');
-        
-        alert("Paciente Salvo com Sucesso!");
-    } catch (e: any) {
-        console.error("Erro ao criar paciente:", e);
-        alert("Erro ao criar paciente: " + (e.message || "Desconhecido. Verifique o console."));
-    }
-  };
 
   const handleAnalysis = async (notes: string, approach: string) => {
     const selectedTemplate = templates.find(t => t.id === selectedTemplateId) || DEFAULT_TEMPLATES[0];
@@ -418,140 +355,28 @@ function App() {
                                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2 block">
                                     Paciente da Sessão
                                 </label>
-                                {!isCreatingPatient ? (
-                                    <div className="flex gap-2">
-                                        <select
-                                            value={currentPatient?.id || ''}
-                                            onChange={(e) => {
-                                                const p = patients.find(pat => pat.id === e.target.value);
-                                                setCurrentPatient(p || null);
-                                                if (report) {
-                                                    setIsReportSaved(false);
-                                                }
-                                            }}
-                                            className="flex-1 p-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none shadow-sm transition-shadow"
-                                        >
-                                            <option value="">Selecione um paciente (Opcional)...</option>
-                                            {patients.map(p => (
-                                                <option key={p.id} value={p.id}>{p.name}</option>
-                                            ))}
-                                        </select>
-                                        <button 
-                                            onClick={() => setIsCreatingPatient(true)}
-                                            className="px-4 py-2.5 bg-teal-50 text-teal-700 hover:bg-teal-100 rounded-xl text-sm font-medium transition-colors flex items-center gap-2 border border-teal-100"
-                                        >
-                                            <Plus className="h-4 w-4" /> <span className="hidden sm:inline">Novo</span>
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-sm font-medium text-slate-800">Cadastrando Novo Paciente</span>
-                                        <button 
-                                            onClick={() => setIsCreatingPatient(false)}
-                                            className="text-xs text-slate-500 hover:text-slate-700"
-                                        >
-                                            Cancelar
-                                        </button>
-                                    </div>
-                                )}
+                                <div className="flex gap-2">
+                                    <select
+                                        value={currentPatient?.id || ''}
+                                        onChange={(e) => {
+                                            const p = patients.find(pat => pat.id === e.target.value);
+                                            setCurrentPatient(p || null);
+                                            if (report) {
+                                                setIsReportSaved(false);
+                                            }
+                                        }}
+                                        className="flex-1 p-2.5 bg-white border border-slate-300 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none shadow-sm transition-shadow"
+                                    >
+                                        <option value="">Selecione um paciente (Opcional)...</option>
+                                        {patients.map(p => (
+                                            <option key={p.id} value={p.id}>{p.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
-                        {isCreatingPatient && (
-                            <div className="p-5 border-t border-slate-100 bg-white animate-fadeIn">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-600 mb-1.5">Nome Completo *</label>
-                                        <input 
-                                            type="text"
-                                            value={newPatientName}
-                                            onChange={(e) => setNewPatientName(e.target.value)}
-                                            className="w-full text-sm p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
-                                            placeholder="Ex: João da Silva"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-600 mb-1.5">WhatsApp / Telefone</label>
-                                        <input 
-                                            type="text"
-                                            value={newPatientPhone}
-                                            onChange={(e) => setNewPatientPhone(e.target.value)}
-                                            className="w-full text-sm p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
-                                            placeholder="Ex: 11 99999-9999"
-                                        />
-                                    </div>
-                                </div>
-                                
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-5">
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-600 mb-1.5">Nascimento</label>
-                                        <input 
-                                            type="date"
-                                            value={newPatientBirthDate}
-                                            onChange={(e) => {
-                                                setNewPatientBirthDate(e.target.value);
-                                                calculateAge(e.target.value);
-                                            }}
-                                            className="w-full text-sm p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-600 mb-1.5">Idade</label>
-                                        <input 
-                                            type="number"
-                                            value={newPatientAge}
-                                            onChange={(e) => setNewPatientAge(e.target.value)}
-                                            className="w-full text-sm p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
-                                            placeholder="Ex: 35"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-600 mb-1.5">Altura (cm)</label>
-                                        <input 
-                                            type="number"
-                                            value={newPatientHeight}
-                                            onChange={(e) => setNewPatientHeight(e.target.value)}
-                                            className="w-full text-sm p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
-                                            placeholder="Ex: 175"
-                                        />
-                                    </div>
-                                    <div>
-                                        <label className="block text-xs font-medium text-slate-600 mb-1.5">Peso (kg)</label>
-                                        <input 
-                                            type="number"
-                                            value={newPatientWeight}
-                                            onChange={(e) => setNewPatientWeight(e.target.value)}
-                                            className="w-full text-sm p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
-                                            placeholder="Ex: 70"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="mb-5">
-                                    <label className="block text-xs font-medium text-slate-600 mb-1.5">Contexto / Anamnese Detalhada</label>
-                                    <div className="h-40">
-                                        <RichTextEditor 
-                                            value={newPatientContext}
-                                            onChange={setNewPatientContext}
-                                            placeholder="Histórico familiar, diagnósticos prévios, medicações..."
-                                            minHeight="min-h-[150px]"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="flex justify-end">
-                                    <button 
-                                        onClick={handleCreatePatient}
-                                        disabled={!newPatientName.trim()}
-                                        className="px-6 py-2.5 text-sm font-medium bg-teal-600 text-white rounded-xl hover:bg-teal-700 disabled:opacity-50 transition-colors shadow-sm"
-                                    >
-                                        Salvar Paciente
-                                    </button>
-                                </div>
-                            </div>
-                        )}
-
-                        {currentPatient && !isCreatingPatient && (
+                        {currentPatient && (
                             <div className="px-5 py-4 border-t border-slate-100 bg-white">
                                 <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
                                     {currentPatient.age && (

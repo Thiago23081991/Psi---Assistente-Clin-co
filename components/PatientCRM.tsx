@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Patient, SessionRecord } from '../types';
 import { useData } from '../contexts/DataContext';
-import { User, Calendar, Trash2, Search, ArrowLeft, Clock, Activity, FileText, Phone, Mail, Edit3, Save } from 'lucide-react';
+import { User, Calendar, Trash2, Search, ArrowLeft, Clock, Activity, FileText, Phone, Mail, Edit3, Save, Plus } from 'lucide-react';
 import ReportView from './ReportView';
 
 const PatientCRM: React.FC = () => {
@@ -12,6 +12,17 @@ const PatientCRM: React.FC = () => {
   // Edit mode functionality for the Patient Profile
   const [isEditing, setIsEditing] = useState(false);
   const [editedPatient, setEditedPatient] = useState<Patient | null>(null);
+  const [isCreatingNew, setIsCreatingNew] = useState(false);
+
+  // New Patient Form State
+  const [newPatientName, setNewPatientName] = useState('');
+  const [newPatientPhone, setNewPatientPhone] = useState('');
+  const [newPatientBirthDate, setNewPatientBirthDate] = useState('');
+  const [newPatientAge, setNewPatientAge] = useState('');
+  const [newPatientHeight, setNewPatientHeight] = useState('');
+  const [newPatientWeight, setNewPatientWeight] = useState('');
+  const [newPatientContext, setNewPatientContext] = useState('');
+
 
   // Filter sessions for the selected patient
   const patientSessions = selectedPatientId 
@@ -26,8 +37,70 @@ const PatientCRM: React.FC = () => {
 
   const handleSelectPatient = (patient: Patient) => {
     setSelectedPatientId(patient.id);
+    setIsCreatingNew(false);
     setIsEditing(false);
     setEditedPatient({ ...patient });
+  };
+
+  const handleStartCreate = () => {
+    setSelectedPatientId(null);
+    setIsCreatingNew(true);
+    setNewPatientName('');
+    setNewPatientPhone('');
+    setNewPatientBirthDate('');
+    setNewPatientAge('');
+    setNewPatientHeight('');
+    setNewPatientWeight('');
+    setNewPatientContext('');
+  };
+
+  const calculateAge = (dob: string) => {
+    if (!dob) return;
+    const birthDate = new Date(dob);
+    const today = new Date();
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    setNewPatientAge(age.toString());
+  };
+
+  const handleCreatePatient = async () => {
+    if (!newPatientName.trim()) return;
+    
+    const newPatient: Patient = {
+        id: Date.now().toString(),
+        name: newPatientName,
+        phoneNumber: newPatientPhone,
+        birthDate: newPatientBirthDate,
+        age: newPatientAge,
+        height: newPatientHeight,
+        weight: newPatientWeight,
+        context: newPatientContext,
+        createdAt: new Date().toISOString(),
+        status: 'active'
+    };
+    
+    try {
+        await savePatient(newPatient);
+        
+        setIsCreatingNew(false);
+        setSelectedPatientId(newPatient.id);
+        
+        // Reset form
+        setNewPatientName('');
+        setNewPatientPhone('');
+        setNewPatientBirthDate('');
+        setNewPatientAge('');
+        setNewPatientHeight('');
+        setNewPatientWeight('');
+        setNewPatientContext('');
+        
+    } catch (e: any) {
+        console.error("Erro ao criar paciente:", e);
+        alert("Erro ao criar paciente: " + (e.message || "Desconhecido. Verifique o console."));
+    }
   };
 
   const handleSaveProfile = async () => {
@@ -74,9 +147,18 @@ const PatientCRM: React.FC = () => {
         md:w-80 md:min-w-[320px] lg:w-96 lg:min-w-[384px]
       `}>
         <div className="p-5 border-b border-slate-200 bg-white">
-          <h3 className="font-semibold text-slate-800 mb-4 flex items-center gap-2 text-lg">
-            <User className="h-5 w-5 text-teal-600" />
-            CRM Clínico <span className="text-sm font-normal text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full ml-auto">{patients.length} ativos</span>
+          <h3 className="font-semibold text-slate-800 mb-4 flex items-center justify-between text-lg">
+            <div className="flex items-center gap-2">
+                <User className="h-5 w-5 text-teal-600" />
+                CRM <span className="text-sm font-normal text-slate-500 bg-slate-100 px-2 py-0.5 rounded-full ml-1">{patients.length}</span>
+            </div>
+            <button 
+                onClick={handleStartCreate}
+                className="bg-teal-600 text-white p-1.5 rounded-lg hover:bg-teal-700 transition-colors shadow-sm"
+                title="Cadastrar Novo Paciente"
+            >
+                <Plus className="h-4 w-4" />
+            </button>
           </h3>
           <div className="relative">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
@@ -136,17 +218,129 @@ const PatientCRM: React.FC = () => {
       {/* Main Content Area - Patient Profile & Timeline */}
       <div className={`
         flex-1 flex-col bg-slate-50/50 h-full overflow-y-auto
-        ${selectedPatientId ? 'flex' : 'hidden md:flex'}
+        ${(selectedPatientId || isCreatingNew) ? 'flex' : 'hidden md:flex'}
       `}>
-        {!selectedPatientId || !selectedPatient ? (
+        {(!selectedPatientId && !isCreatingNew) ? (
           <div className="flex-1 flex flex-col items-center justify-center text-slate-400 p-8 text-center">
             <div className="bg-white p-6 rounded-full shadow-sm mb-4 border border-slate-100">
                 <User className="h-16 w-16 opacity-30 text-slate-400" />
             </div>
             <h3 className="text-xl font-medium text-slate-600 mb-2">Prontuário Eletrônico</h3>
-            <p className="max-w-md">Selecione um paciente na lista lateral para acessar o perfil detalhado e o histórico longitudinal de sessões.</p>
+            <p className="max-w-md">Selecione um paciente na lista lateral para acessar o perfil, ou cadastre um novo paciente usando o botão de "+".</p>
           </div>
-        ) : (
+        ) : isCreatingNew ? (
+          <div className="p-4 md:p-8 max-w-5xl mx-auto w-full">
+               {/* Mobile Back Button */}
+              <button 
+                  onClick={() => setIsCreatingNew(false)}
+                  className="md:hidden flex items-center text-slate-500 hover:text-teal-600 mb-4 text-sm font-medium transition-colors"
+              >
+                  <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
+              </button>
+
+              <h2 className="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                  <User className="h-6 w-6 text-teal-600" />
+                  Cadastrar Novo Paciente
+              </h2>
+
+              <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8 animate-fadeIn">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
+                        <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1.5">Nome Completo *</label>
+                            <input 
+                                type="text"
+                                value={newPatientName}
+                                onChange={(e) => setNewPatientName(e.target.value)}
+                                className="w-full text-sm p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none bg-slate-50 focus:bg-white transition-all shadow-sm"
+                                placeholder="Ex: João da Silva"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1.5">WhatsApp / Telefone</label>
+                            <input 
+                                type="text"
+                                value={newPatientPhone}
+                                onChange={(e) => setNewPatientPhone(e.target.value)}
+                                className="w-full text-sm p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none bg-slate-50 focus:bg-white transition-all shadow-sm"
+                                placeholder="Ex: 11 99999-9999"
+                            />
+                        </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-5 mb-5">
+                        <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1.5">Nascimento</label>
+                            <input 
+                                type="date"
+                                value={newPatientBirthDate}
+                                onChange={(e) => {
+                                    setNewPatientBirthDate(e.target.value);
+                                    calculateAge(e.target.value);
+                                }}
+                                className="w-full text-sm p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none bg-slate-50 focus:bg-white transition-all shadow-sm"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1.5">Idade</label>
+                            <input 
+                                type="number"
+                                value={newPatientAge}
+                                onChange={(e) => setNewPatientAge(e.target.value)}
+                                className="w-full text-sm p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none bg-slate-50 focus:bg-white transition-all shadow-sm"
+                                placeholder="Ex: 35"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1.5">Altura (cm)</label>
+                            <input 
+                                type="number"
+                                value={newPatientHeight}
+                                onChange={(e) => setNewPatientHeight(e.target.value)}
+                                className="w-full text-sm p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none bg-slate-50 focus:bg-white transition-all shadow-sm"
+                                placeholder="Ex: 175"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-medium text-slate-600 mb-1.5">Peso (kg)</label>
+                            <input 
+                                type="number"
+                                value={newPatientWeight}
+                                onChange={(e) => setNewPatientWeight(e.target.value)}
+                                className="w-full text-sm p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none bg-slate-50 focus:bg-white transition-all shadow-sm"
+                                placeholder="Ex: 70"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="mb-6">
+                        <label className="block text-xs font-medium text-slate-600 mb-1.5">Contexto Anamnese / HD</label>
+                        <textarea 
+                            value={newPatientContext}
+                            onChange={(e) => setNewPatientContext(e.target.value)}
+                            className="w-full text-sm p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none bg-slate-50 focus:bg-white transition-all shadow-sm resize-y"
+                            placeholder="Histórico familiar, diagnósticos prévios, medicações..."
+                            rows={5}
+                        />
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                        <button 
+                            onClick={() => setIsCreatingNew(false)}
+                            className="px-6 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                        <button 
+                            onClick={handleCreatePatient}
+                            disabled={!newPatientName.trim()}
+                            className="px-6 py-2.5 text-sm font-medium bg-teal-600 text-white rounded-xl hover:bg-teal-700 disabled:opacity-50 transition-colors shadow-sm flex items-center gap-2"
+                        >
+                            <Save className="h-4 w-4" /> Salvar Paciente
+                        </button>
+                    </div>
+              </div>
+          </div>
+        ) : selectedPatient ? (
           <div className="p-4 md:p-8 max-w-5xl mx-auto w-full">
             {/* Mobile Back Button */}
             <button 
@@ -287,7 +481,7 @@ const PatientCRM: React.FC = () => {
                 </div>
             )}
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );
