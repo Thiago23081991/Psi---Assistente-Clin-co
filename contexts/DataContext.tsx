@@ -97,17 +97,24 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const savePatient = async (patient: Patient) => {
     if (!user) return;
     
-    // Encrypt sensitive fields before saving, ensuring undefined/null are handled as empty strings or preserved
-    const securePatient: Patient = {
-        ...patient,
-        name: await cryptoService.encrypt(patient.name || '', user.uid),
-        phoneNumber: patient.phoneNumber ? await cryptoService.encrypt(patient.phoneNumber, user.uid) : patient.phoneNumber,
-        emergencyContact: patient.emergencyContact ? await cryptoService.encrypt(patient.emergencyContact, user.uid) : patient.emergencyContact,
-        diagnosticHypothesis: patient.diagnosticHypothesis ? await cryptoService.encrypt(patient.diagnosticHypothesis, user.uid) : patient.diagnosticHypothesis,
-        context: patient.context ? await cryptoService.encrypt(patient.context, user.uid) : patient.context,
-    };
-    
-    await setDoc(doc(db, `users/${user.uid}/patients/${securePatient.id}`), securePatient);
+    try {
+        console.log("Iniciando criptografia para o paciente:", patient);
+        // Encrypt sensitive fields before saving, ensuring undefined/null are handled
+        const securePatient: Patient = { ...patient };
+        
+        securePatient.name = await cryptoService.encrypt(patient.name || '', user.uid);
+        if (patient.phoneNumber) securePatient.phoneNumber = await cryptoService.encrypt(patient.phoneNumber, user.uid);
+        if (patient.emergencyContact) securePatient.emergencyContact = await cryptoService.encrypt(patient.emergencyContact, user.uid);
+        if (patient.diagnosticHypothesis) securePatient.diagnosticHypothesis = await cryptoService.encrypt(patient.diagnosticHypothesis, user.uid);
+        if (patient.context) securePatient.context = await cryptoService.encrypt(patient.context, user.uid);
+        
+        console.log("Salvando no Firebase o paciente seguro na Collection paths...");
+        await setDoc(doc(db, `users/${user.uid}/patients/${securePatient.id}`), securePatient);
+        console.log("Salvo no firebase com sucesso");
+    } catch (e) {
+        console.error("ERRO GRAVE AO SALVAR NO DATACONTEXT:", e);
+        throw e; // Lança para o PatientCRM capturar e dar o alert
+    }
   };
 
   const deletePatient = async (id: string) => {

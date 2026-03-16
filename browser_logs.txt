@@ -1,0 +1,12 @@
+Iniciando teste...
+[CONSOLE] cdn.tailwindcss.com should not be used in production. To use Tailwind CSS in production, install it as a PostCSS plugin or use the Tailwind CLI: https://tailwindcss.com/docs/installation
+[CONSOLE] [vite] connecting...
+[CONSOLE] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[CONSOLE] [vite] connected.
+[CONSOLE] Failed to load resource: the server responded with a status of 404 (Not Found)
+[CONSOLE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o
+[CONSOLE] Failed to load resource: the server responded with a status of 400 ()
+[CONSOLE] Auth error: FirebaseError: Firebase: Error (auth/email-already-in-use).
+URL Atual: http://localhost:3000/
+Botoes encontrados na MAIN LACO: Nova Sessão, CRM Pacientes, Agenda, Consultar Histórico, Remarketing, Sair da Conta, ,  Novo,  Gravar Resumo,  Limpar, , , , ,  Gerenciar, Gerar Relatório Estruturado
+[ERRO] Botão 'Salvar Paciente' não encontrado.

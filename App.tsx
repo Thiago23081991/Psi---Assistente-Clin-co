@@ -160,7 +160,7 @@ function App() {
     setNewPatientAge(age.toString());
   };
 
-  const handleCreatePatient = () => {
+  const handleCreatePatient = async () => {
     if (!newPatientName.trim()) return;
     
     const newPatient: Patient = {
@@ -172,10 +172,13 @@ function App() {
         height: newPatientHeight,
         weight: newPatientWeight,
         context: newPatientContext,
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        status: 'active'
     };
     
-    savePatient(newPatient).then(() => {
+    try {
+        await savePatient(newPatient);
+        
         setCurrentPatient(newPatient);
         if (report) {
             setIsReportSaved(false);
@@ -190,7 +193,12 @@ function App() {
         setNewPatientHeight('');
         setNewPatientWeight('');
         setNewPatientContext('');
-    });
+        
+        alert("Paciente Salvo com Sucesso!");
+    } catch (e: any) {
+        console.error("Erro ao criar paciente:", e);
+        alert("Erro ao criar paciente: " + (e.message || "Desconhecido. Verifique o console."));
+    }
   };
 
   const handleAnalysis = async (notes: string, approach: string) => {

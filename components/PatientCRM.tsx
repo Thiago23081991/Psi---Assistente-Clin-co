@@ -32,11 +32,16 @@ const PatientCRM: React.FC = () => {
 
   const handleSaveProfile = async () => {
       if (editedPatient) {
-          // Atualiza o banco de dados
-          await savePatient(editedPatient);
-          setIsEditing(false);
-          // Atualiza a seleção local imediatamente para evitar "piscar" ou não atualizar
-          setSelectedPatientId(editedPatient.id);
+          try {
+              // Atualiza o banco de dados
+              await savePatient(editedPatient);
+              setIsEditing(false);
+              // Atualiza a seleção local imediatamente para evitar "piscar" ou não atualizar
+              setSelectedPatientId(editedPatient.id);
+          } catch (error: any) {
+              console.error("Erro detalhado ao salvar paciente:", error);
+              alert("Erro ao salvar: " + (error.message || "Verifique o console para mais detalhes."));
+          }
       }
   };
 
