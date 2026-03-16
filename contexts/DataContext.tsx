@@ -57,12 +57,12 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const p = docSnap.data() as Patient;
           return {
               ...p,
-              // Decrypt sensitive fields
-              name: await cryptoService.decrypt(p.name, user.uid),
+              // Decrypt sensitive fields with safety checks for undefined
+              name: p.name ? await cryptoService.decrypt(p.name, user.uid) : 'Nome Desconhecido',
               phoneNumber: p.phoneNumber ? await cryptoService.decrypt(p.phoneNumber, user.uid) : p.phoneNumber,
               emergencyContact: p.emergencyContact ? await cryptoService.decrypt(p.emergencyContact, user.uid) : p.emergencyContact,
               diagnosticHypothesis: p.diagnosticHypothesis ? await cryptoService.decrypt(p.diagnosticHypothesis, user.uid) : p.diagnosticHypothesis,
-              context: await cryptoService.decrypt(p.context, user.uid),
+              context: p.context ? await cryptoService.decrypt(p.context, user.uid) : '',
           };
       }));
       setPatients(data);
@@ -97,14 +97,14 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const savePatient = async (patient: Patient) => {
     if (!user) return;
     
-    // Encrypt sensitive fields before saving
+    // Encrypt sensitive fields before saving, ensuring undefined/null are handled as empty strings or preserved
     const securePatient: Patient = {
         ...patient,
-        name: await cryptoService.encrypt(patient.name, user.uid),
+        name: await cryptoService.encrypt(patient.name || '', user.uid),
         phoneNumber: patient.phoneNumber ? await cryptoService.encrypt(patient.phoneNumber, user.uid) : patient.phoneNumber,
         emergencyContact: patient.emergencyContact ? await cryptoService.encrypt(patient.emergencyContact, user.uid) : patient.emergencyContact,
         diagnosticHypothesis: patient.diagnosticHypothesis ? await cryptoService.encrypt(patient.diagnosticHypothesis, user.uid) : patient.diagnosticHypothesis,
-        context: await cryptoService.encrypt(patient.context, user.uid),
+        context: patient.context ? await cryptoService.encrypt(patient.context, user.uid) : patient.context,
     };
     
     await setDoc(doc(db, `users/${user.uid}/patients/${securePatient.id}`), securePatient);
