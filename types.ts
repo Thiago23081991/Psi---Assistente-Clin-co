@@ -55,6 +55,8 @@ export interface ScheduledSession {
   duration: number; // minutes
   status: 'scheduled' | 'completed' | 'cancelled';
   notes?: string;
+  isOnline?: boolean;
+  meetLink?: string;
   reminderSent?: boolean;
   reminderSentAt?: string; // ISO Date String
 }

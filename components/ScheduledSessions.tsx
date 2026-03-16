@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Patient, ScheduledSession } from '../types';
 import { useData } from '../contexts/DataContext';
 import { whatsappService } from '../services/whatsappService';
-import { Calendar, Clock, Plus, CheckCircle, XCircle, Trash2, User, Play, X, MessageCircle, Loader2, Check, Info, Edit2, FileText, Smartphone, Send, Zap, CalendarPlus } from 'lucide-react';
+import { Calendar, Clock, Plus, CheckCircle, XCircle, Trash2, User, Play, X, MessageCircle, Loader2, Check, Info, Edit2, FileText, Smartphone, Send, Zap, CalendarPlus, Video, Link as LinkIcon } from 'lucide-react';
 
 interface ScheduledSessionsProps {
   onStartSession: (patientId: string) => void;
@@ -36,6 +36,14 @@ const ScheduledSessions: React.FC<ScheduledSessionsProps> = ({ onStartSession })
   const [time, setTime] = useState('');
   const [duration, setDuration] = useState(50);
   const [notes, setNotes] = useState('');
+  const [isOnline, setIsOnline] = useState(false);
+
+  // Gera um link aleatório de Meet (formato padrão do Google Meet)
+  const generateMeetLink = () => {
+      const chars = 'abcdefghijklmnopqrstuvwxyz';
+      const segment = (length: number) => Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+      return `https://meet.google.com/${segment(3)}-${segment(4)}-${segment(3)}`;
+  };
 
   // Fechar menu ao clicar fora
   useEffect(() => {
@@ -72,6 +80,8 @@ const ScheduledSessions: React.FC<ScheduledSessionsProps> = ({ onStartSession })
             date,
             time,
             duration,
+            isOnline,
+            meetLink: isOnline && !existingSession.meetLink ? generateMeetLink() : (isOnline ? existingSession.meetLink : undefined),
             notes: notes.trim()
         };
     } else {
@@ -83,6 +93,8 @@ const ScheduledSessions: React.FC<ScheduledSessionsProps> = ({ onStartSession })
             time,
             duration,
             status: 'scheduled',
+            isOnline,
+            meetLink: isOnline ? generateMeetLink() : undefined,
             reminderSent: false,
             notes: notes.trim()
         };
@@ -99,6 +111,7 @@ const ScheduledSessions: React.FC<ScheduledSessionsProps> = ({ onStartSession })
     setTime(session.time);
     setDuration(session.duration);
     setNotes(session.notes || '');
+    setIsOnline(session.isOnline || false);
     setIsModalOpen(true);
   };
 
@@ -114,6 +127,7 @@ const ScheduledSessions: React.FC<ScheduledSessionsProps> = ({ onStartSession })
     setTime('');
     setDuration(50);
     setNotes('');
+    setIsOnline(false);
   };
 
   const updateStatus = async (id: string, status: ScheduledSession['status']) => {
@@ -162,12 +176,18 @@ const ScheduledSessions: React.FC<ScheduledSessionsProps> = ({ onStartSession })
 
       try {
           const dateStr = new Date(session.date).toLocaleDateString('pt-BR');
+          let textMsg = `Olá ${patient.name}, lembrando da nossa sessão agendada para amanhã, ${dateStr} às ${session.time}.`;
+          
+          if (session.isOnline && session.meetLink) {
+              textMsg += `\n\n🎥 Link da chamada de vídeo: ${session.meetLink}`;
+          }
+
           const success = await whatsappService.sendAppointmentReminder(
               patient.phoneNumber,
               patient.name,
               dateStr,
               session.time
-          );
+          ); // Nota: Em um ambiente real com Twilio/API, o template da API também precisaria incluir a variável do link.
 
           if (success) {
               const now = new Date().toISOString();
@@ -202,6 +222,9 @@ const ScheduledSessions: React.FC<ScheduledSessionsProps> = ({ onStartSession })
       let message = '';
       if (type === 'confirm') {
           message = `Olá ${patient.name}, gostaria de confirmar nossa sessão agendada para *${dateStr} às ${session.time}*.`;
+          if (session.isOnline && session.meetLink) {
+              message += `\n\n🎥 A sessão será online. Aqui está o seu link de acesso:\n${session.meetLink}`;
+          }
       } else {
           message = `Olá ${patient.name}, infelizmente precisarei remarcar nossa sessão de *${dateStr} às ${session.time}*. Podemos ver um novo horário?`;
       }
@@ -226,8 +249,16 @@ const ScheduledSessions: React.FC<ScheduledSessionsProps> = ({ onStartSession })
       const patient = getPatient(session.patientId);
       const patientName = patient?.name || 'Paciente';
       
-      const title = encodeURIComponent(`Sessão Psi: ${patientName}`);
-      const details = encodeURIComponent(`Sessão com ${patientName}.\n\nObservações: ${session.notes || ''}`);
+      let titleParams = `Sessão Psi: ${patientName}`;
+      let detailsText = `Sessão com ${patientName}.\n\nObservações: ${session.notes || ''}`;
+      
+      if (session.isOnline && session.meetLink) {
+          titleParams = `Sessão Online Psi: ${patientName}`;
+          detailsText += `\n\nLink da Sessão: ${session.meetLink}`;
+      }
+
+      const title = encodeURIComponent(titleParams);
+      const details = encodeURIComponent(detailsText);
       
       const [year, month, day] = session.date.split('-');
       const [hour, minute] = session.time.split(':');
@@ -298,8 +329,31 @@ const ScheduledSessions: React.FC<ScheduledSessionsProps> = ({ onStartSession })
                                             <Clock className="h-3.5 w-3.5" /> 
                                             {session.time} ({session.duration} min)
                                         </span>
+                                        {session.isOnline && (
+                                            <span className="flex items-center gap-1 text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded font-medium">
+                                                <Video className="h-3.5 w-3.5" /> Online
+                                            </span>
+                                        )}
                                     </div>
                                     
+                                    {session.isOnline && session.meetLink && (
+                                        <div className="mt-2 text-xs flex items-center gap-2">
+                                            <a href={session.meetLink} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2 py-1.5 rounded border border-blue-100 transition-colors w-fit">
+                                                <Video className="h-3.5 w-3.5" /> Entrar na Chamada
+                                            </a>
+                                            <button 
+                                                onClick={() => {
+                                                    navigator.clipboard.writeText(session.meetLink!);
+                                                    alert("Link copiado para a área de transferência!");
+                                                }}
+                                                className="text-slate-400 hover:text-slate-600 p-1 rounded hover:bg-slate-100 transition-colors"
+                                                title="Copiar Link"
+                                            >
+                                                <LinkIcon className="h-3.5 w-3.5" />
+                                            </button>
+                                        </div>
+                                    )}
+
                                     {session.notes && (
                                         <div className="mt-2 text-xs text-slate-600 bg-slate-50 p-2 rounded border border-slate-100 flex items-start gap-1.5 w-full md:w-[90%]">
                                             <FileText className="h-3.5 w-3.5 mt-0.5 text-slate-400 flex-shrink-0" />
@@ -517,6 +571,23 @@ const ScheduledSessions: React.FC<ScheduledSessionsProps> = ({ onStartSession })
                         onChange={(e) => setDuration(Number(e.target.value))}
                         className="w-full p-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
                       />
+                  </div>
+
+                  <div className="p-3 bg-blue-50/50 border border-blue-100 rounded-xl">
+                      <label className="flex items-center gap-3 cursor-pointer">
+                          <input 
+                              type="checkbox" 
+                              checked={isOnline}
+                              onChange={(e) => setIsOnline(e.target.checked)}
+                              className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 border-slate-300"
+                          />
+                          <div className="flex flex-col">
+                              <span className="text-sm font-medium text-slate-800 flex items-center gap-2">
+                                  <Video className="h-4 w-4 text-blue-600" /> Sessão Online
+                              </span>
+                              <span className="text-xs text-slate-500">Um link do Google Meet será gerado automaticamente.</span>
+                          </div>
+                      </label>
                   </div>
                   
                   <div>
