@@ -25,25 +25,25 @@ export const analyzeSessionNotes = async (request: AnalysisRequest): Promise<str
         return "⚠️ Chave de API (VITE_GEMINI_API_KEY) não encontrada. Peça ao administrador para configurar as variáveis de ambiente na Vercel.";
     }
 
-    const API_URL = \`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=\${API_KEY}\`;
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=${API_KEY}`;
 
-    const promptText = \`
+    const promptText = `
         Analise as seguintes anotações da sessão clínica:
         
         --- INÍCIO DAS NOTAS ---
-        \${request.notes}
+        ${request.notes}
         --- FIM DAS NOTAS ---
 
-        Abordagem Teórica Selecionada: \${request.approach}
-        \${request.patientContext ? \`Contexto do Paciente: \${request.patientContext}\` : ''}
+        Abordagem Teórica Selecionada: ${request.approach}
+        ${request.patientContext ? `Contexto do Paciente: ${request.patientContext}` : ''}
 
         INSTRUÇÃO DE FORMATAÇÃO:
         Gere o relatório preenchendo o conteúdo abaixo, mantendo a estrutura exata do template Markdown fornecido.
-        Adapte o vocabulário e o olhar clínico para a Abordagem Teórica: \${request.approach}.
+        Adapte o vocabulário e o olhar clínico para a Abordagem Teórica: ${request.approach}.
 
         TEMPLATE A SEGUIR:
-        \${request.templateStructure}
-    \`;
+        ${request.templateStructure}
+    `;
 
     const requestBody = {
       systemInstruction: {
@@ -69,7 +69,7 @@ export const analyzeSessionNotes = async (request: AnalysisRequest): Promise<str
     if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error("Gemini API Error details:", errorData);
-        throw new Error(errorData.error?.message || \`HTTP error! status: \${response.status}\`);
+        throw new Error(errorData.error?.message || `HTTP error! status: ${response.status}`);
     }
 
     const data = await response.json();
@@ -78,8 +78,8 @@ export const analyzeSessionNotes = async (request: AnalysisRequest): Promise<str
   } catch (error: any) {
     console.error("Erro ao analisar sessão via Gemini API:", error);
     if (error.message?.includes("fetch") || error.message?.includes("NetworkError")) {
-        return \`⚠️ **Erro de Conexão:**\\n\\nNão foi possível conectar ao servidor da Google (Gemini). Verifique sua conexão com a internet.\`;
+        return `⚠️ **Erro de Conexão:**\n\nNão foi possível conectar ao servidor da Google (Gemini). Verifique sua conexão com a internet.`;
     }
-    return \`Erro ao processar a solicitação na IA do Google: \${error.message}\`;
+    return `Erro ao processar a solicitação na IA do Google: ${error.message}`;
   }
 };
