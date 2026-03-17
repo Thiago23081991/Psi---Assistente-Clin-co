@@ -15,10 +15,12 @@ const OnboardingProfession: React.FC<OnboardingProps> = ({ uid, email, onComplet
   const [name, setName] = useState('');
   const [crp, setCrp] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleComplete = async () => {
     if (!selected || !name.trim()) return;
     setLoading(true);
+    setError(null);
 
     const profile: UserProfile = {
       uid,
@@ -32,8 +34,9 @@ const OnboardingProfession: React.FC<OnboardingProps> = ({ uid, email, onComplet
     try {
       await setDoc(doc(db, 'userProfiles', uid), profile);
       onComplete(profile);
-    } catch (error) {
-      console.error('Erro ao salvar perfil:', error);
+    } catch (err: any) {
+      console.error('Erro ao salvar perfil:', err);
+      setError(`Erro ao salvar perfil: ${err.message || 'Erro desconhecido'}`);
     } finally {
       setLoading(false);
     }
@@ -77,6 +80,12 @@ const OnboardingProfession: React.FC<OnboardingProps> = ({ uid, email, onComplet
             Para personalizar sua experiência, precisamos de algumas informações básicas sobre você.
           </p>
         </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl text-sm text-center">
+            {error}
+          </div>
+        )}
 
         {/* Name field */}
         <div className="mb-6">
