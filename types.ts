@@ -1,3 +1,14 @@
+export type ProfessionType = 'psicologo' | 'terapeuta';
+
+export interface UserProfile {
+  uid: string;
+  email?: string;
+  name?: string;
+  profession: ProfessionType;
+  crp?: string;
+  createdAt: string;
+}
+
 export interface SessionData {
   id: string;
   patientName: string;

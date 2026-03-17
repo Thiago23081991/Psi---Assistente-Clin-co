@@ -8,12 +8,15 @@ import ScheduledSessions from './components/ScheduledSessions';
 import Remarketing from './components/Remarketing';
 import RichTextEditor from './components/RichTextEditor';
 import Auth from './components/Auth';
+import OnboardingProfession from './components/OnboardingProfession';
 import { analyzeSessionNotes } from './services/geminiService';
 import { notificationService } from './services/notificationService';
 import { useData } from './contexts/DataContext';
-import { AnalysisRequest, ReportTemplate, Patient, SessionRecord, TherapeuticApproach } from './types';
+import { AnalysisRequest, ReportTemplate, Patient, SessionRecord, TherapeuticApproach, UserProfile } from './types';
 import { Plus, Users, History, Save, CalendarCheck, TrendingUp, BrainCircuit, Menu, X, FileText, LogOut, LayoutList } from 'lucide-react';
 import { auth } from './firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from './firebase';
 
 // Default Templates
 const DEFAULT_TEMPLATES: ReportTemplate[] = [
@@ -117,6 +120,9 @@ function App() {
   const [currentApproach, setCurrentApproach] = useState<string>('');
   const [isReportSaved, setIsReportSaved] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [onboardingNeeded, setOnboardingNeeded] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(true);
   
   // Patient State
   const [currentPatient, setCurrentPatient] = useState<Patient | null>(null);
@@ -125,6 +131,36 @@ function App() {
   const [templates, setTemplates] = useState<ReportTemplate[]>(DEFAULT_TEMPLATES);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(DEFAULT_TEMPLATES[0].id);
   const [isTemplateManagerOpen, setIsTemplateManagerOpen] = useState(false);
+
+  // Carrega perfil do usuário do Firestore ao logar
+  useEffect(() => {
+    if (!user) {
+      setUserProfile(null);
+      setOnboardingNeeded(false);
+      setProfileLoading(false);
+      return;
+    }
+    const checkProfile = async () => {
+      setProfileLoading(true);
+      try {
+        const profileRef = doc(db, 'userProfiles', user.uid);
+        const profileSnap = await getDoc(profileRef);
+        if (profileSnap.exists()) {
+          setUserProfile(profileSnap.data() as UserProfile);
+          setOnboardingNeeded(false);
+        } else {
+          // Novo usuário: mostrar onboarding
+          setOnboardingNeeded(true);
+        }
+      } catch (e) {
+        console.error('Erro ao carregar perfil:', e);
+        setOnboardingNeeded(false);
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+    checkProfile();
+  }, [user]);
 
   useEffect(() => {
     // Check for reminders immediately on load
@@ -243,6 +279,30 @@ function App() {
   if (!user) {
     return <Auth />;
   }
+
+  // Aguarda verificação do perfil antes de renderizar
+  if (profileLoading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
+      </div>
+    );
+  }
+
+  // Novo usuário: mostrar onboarding de profissão
+  if (onboardingNeeded) {
+    return (
+      <OnboardingProfession
+        uid={user.uid}
+        email={user.email}
+        onComplete={(profile) => {
+          setUserProfile(profile);
+          setOnboardingNeeded(false);
+        }}
+      />
+    );
+  }
+
 
   const NavItem = ({ icon: Icon, label, tab, activeColor = 'text-teal-700 bg-teal-50' }: { icon: any, label: string, tab: Tab, activeColor?: string }) => (
     <button
