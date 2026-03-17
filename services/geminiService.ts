@@ -28,7 +28,7 @@ export const analyzeSessionNotes = async (request: AnalysisRequest): Promise<str
     const genAI = new GoogleGenerativeAI(API_KEY);
 
     const model = genAI.getGenerativeModel({
-      model: "gemini-1.5-flash",
+      model: "gemini-pro",
       systemInstruction: SYSTEM_INSTRUCTION,
     });
 
@@ -56,9 +56,7 @@ export const analyzeSessionNotes = async (request: AnalysisRequest): Promise<str
 
   } catch (error: any) {
     console.error("Erro ao analisar sessão via Gemini SDK:", error);
-    if (error.message?.includes("fetch") || error.message?.includes("NetworkError")) {
-      return `⚠️ **Erro de Conexão:**\n\nNão foi possível conectar ao servidor da Google. Verifique sua conexão com a internet.`;
-    }
-    return `Erro ao processar a solicitação na IA do Google: ${error.message}`;
+    // Sempre mostrar o erro real para facilitar o diagnóstico
+    return `Erro ao processar a solicitação na IA do Google: ${error.message || JSON.stringify(error)}`;
   }
 };
