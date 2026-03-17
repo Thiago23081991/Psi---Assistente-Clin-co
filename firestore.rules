@@ -101,5 +101,9 @@ service cloud.firestore {
         allow delete: if isOwner(userId);
       }
     }
+
+    match /userProfiles/{userId} {
+      allow read, write: if isOwner(userId);
+    }
   }
 }

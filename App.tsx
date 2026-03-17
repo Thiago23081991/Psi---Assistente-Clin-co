@@ -149,12 +149,13 @@ function App() {
           setUserProfile(profileSnap.data() as UserProfile);
           setOnboardingNeeded(false);
         } else {
-          // Novo usuário: mostrar onboarding
+          // Novo usuário ou perfil não encontrado: mostrar onboarding
           setOnboardingNeeded(true);
         }
       } catch (e) {
         console.error('Erro ao carregar perfil:', e);
-        setOnboardingNeeded(false);
+        // Se der erro de permissão ou rede, vamos assumir que precisa de onboarding para não travar
+        setOnboardingNeeded(true);
       } finally {
         setProfileLoading(false);
       }
