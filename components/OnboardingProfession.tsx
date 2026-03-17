@@ -22,14 +22,18 @@ const OnboardingProfession: React.FC<OnboardingProps> = ({ uid, email, onComplet
     setLoading(true);
     setError(null);
 
-    const profile: UserProfile = {
+    const profile: any = {
       uid,
       email: email || '',
       name: name.trim(),
       profession: selected,
-      crp: crp.trim() || undefined,
       createdAt: new Date().toISOString(),
     };
+
+    if (crp.trim()) {
+      profile.crp = crp.trim();
+    }
+
 
     try {
       await setDoc(doc(db, 'userProfiles', uid), profile);
