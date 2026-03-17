@@ -1,3 +1,4 @@
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { AnalysisRequest } from "../types";
 
 const SYSTEM_INSTRUCTION = `
@@ -5,29 +6,33 @@ Você é um Assistente Clínico de IA altamente especializado, projetado para au
 Seu objetivo é processar anotações de sessões e transformá-las em documentação clínica profissional, respeitando a abordagem teórica selecionada.
 
 DIRETRIZES DE ADAPTAÇÃO:
-1. **Abordagem Integrativa/Holística**: Se selecionada, observe correlações entre mente, corpo (queixas somáticas), emoções e contexto sistêmico/espiritual. Use linguagem que integre o ser.
-2. **Abordagem Clínica/TCC/Comportamental**: Foque em sintomas, evidências, disfunções cognitivas, manutenção de comportamento e metrificação de progresso.
-3. **Abordagem Psicodinâmica/Analítica**: Foque em conteúdo latente, simbologia, transferência, contratransferência e mecanismos de defesa.
+1. **Abordagem Integrativa/Holística**: Observe correlações entre mente, corpo, emoções e contexto sistêmico/espiritual.
+2. **Abordagem Clínica/TCC/Comportamental**: Foque em sintomas, evidências, disfunções cognitivas e manutenção de comportamento.
+3. **Abordagem Psicodinâmica/Analítica**: Foque em conteúdo latente, simbologia, transferência e mecanismos de defesa.
 
 DIRETRIZES ÉTICAS E DE SEGURANÇA (CRÍTICO):
-1. NUNCA forneça diagnósticos definitivos (CID/DSM). Use termos como "Hipótese diagnóstica", "Sugere-se avaliação de...", "Sintomatologia compatível com...".
+1. NUNCA forneça diagnósticos definitivos (CID/DSM). Use termos como "Hipótese diagnóstica" ou "Sintomatologia compatível com...".
 2. Você é uma ferramenta de suporte à decisão clínica, não um substituto.
-3. Se detectar menções claras a risco de vida, suicídio ou heterocídio, inicie o relatório com: "🔴 ALERTA DE RISCO: [detalhes]".
+3. Se detectar menções claras a risco de vida, inicie o relatório com: "🔴 ALERTA DE RISCO: [detalhes]".
 4. Mantenha tom técnico, empático e isento de julgamento moral.
 `;
 
 export const analyzeSessionNotes = async (request: AnalysisRequest): Promise<string> => {
   try {
-    // Pegando a chave diretamente das variáveis de ambiente do Frontend! Vai funcionar no localhost e na Vercel
-    const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-    
+    const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string;
+
     if (!API_KEY) {
-        return "⚠️ Chave de API (VITE_GEMINI_API_KEY) não encontrada. Peça ao administrador para configurar as variáveis de ambiente na Vercel.";
+      return "⚠️ Chave de API (VITE_GEMINI_API_KEY) não encontrada. Configure-a nas variáveis de ambiente da Vercel e no arquivo .env.local local.";
     }
 
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+    const genAI = new GoogleGenerativeAI(API_KEY);
 
-    const promptText = `
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
+      systemInstruction: SYSTEM_INSTRUCTION,
+    });
+
+    const prompt = `
         Analise as seguintes anotações da sessão clínica:
         
         --- INÍCIO DAS NOTAS ---
@@ -45,40 +50,14 @@ export const analyzeSessionNotes = async (request: AnalysisRequest): Promise<str
         ${request.templateStructure}
     `;
 
-    const requestBody = {
-      systemInstruction: {
-        parts: [{ text: SYSTEM_INSTRUCTION }]
-      },
-      contents: [{
-        parts: [{ text: promptText }]
-      }],
-      generationConfig: {
-        temperature: 0.35,
-        maxOutputTokens: 8192
-      }
-    };
-
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(requestBody),
-    });
-
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error("Gemini API Error details:", errorData);
-        throw new Error(errorData.error?.message || `HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || "Sem resposta do servidor.";
+    const result = await model.generateContent(prompt);
+    const response = result.response;
+    return response.text();
 
   } catch (error: any) {
-    console.error("Erro ao analisar sessão via Gemini API:", error);
+    console.error("Erro ao analisar sessão via Gemini SDK:", error);
     if (error.message?.includes("fetch") || error.message?.includes("NetworkError")) {
-        return `⚠️ **Erro de Conexão:**\n\nNão foi possível conectar ao servidor da Google (Gemini). Verifique sua conexão com a internet.`;
+      return `⚠️ **Erro de Conexão:**\n\nNão foi possível conectar ao servidor da Google. Verifique sua conexão com a internet.`;
     }
     return `Erro ao processar a solicitação na IA do Google: ${error.message}`;
   }
