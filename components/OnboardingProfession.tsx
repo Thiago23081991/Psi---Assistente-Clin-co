@@ -34,17 +34,18 @@ const OnboardingProfession: React.FC<OnboardingProps> = ({ uid, email, onComplet
       profile.crp = crp.trim();
     }
 
+    // Salva localmente PRIMEIRO — garante que o botão sempre funcione
+    localStorage.setItem(`userProfile_${uid}`, JSON.stringify(profile));
 
-    try {
-      await setDoc(doc(db, 'userProfiles', uid), profile);
-      onComplete(profile);
-    } catch (err: any) {
-      console.error('Erro ao salvar perfil:', err);
-      setError(`Erro ao salvar perfil: ${err.message || 'Erro desconhecido'}`);
-    } finally {
-      setLoading(false);
-    }
+    // Tenta salvar no Firestore em segundo plano (não bloqueia o acesso)
+    setDoc(doc(db, 'userProfiles', uid), profile).catch((err) => {
+      console.warn('Perfil salvo localmente. Sincronização com nuvem pendente:', err.message);
+    });
+
+    setLoading(false);
+    onComplete(profile);
   };
+
 
   const professions = [
     {

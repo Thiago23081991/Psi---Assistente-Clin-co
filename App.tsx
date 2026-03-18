@@ -15,7 +15,7 @@ import { useData } from './contexts/DataContext';
 import { AnalysisRequest, ReportTemplate, Patient, SessionRecord, TherapeuticApproach, UserProfile } from './types';
 import { Plus, Users, History, Save, CalendarCheck, TrendingUp, BrainCircuit, Menu, X, FileText, LogOut, LayoutList } from 'lucide-react';
 import { auth } from './firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from './firebase';
 
 // Default Templates
@@ -132,7 +132,7 @@ function App() {
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(DEFAULT_TEMPLATES[0].id);
   const [isTemplateManagerOpen, setIsTemplateManagerOpen] = useState(false);
 
-  // Carrega perfil do usuário do Firestore ao logar
+  // Carrega perfil do usuário (Firestore com fallback para localStorage)
   useEffect(() => {
     if (!user) {
       setUserProfile(null);
@@ -142,19 +142,35 @@ function App() {
     }
     const checkProfile = async () => {
       setProfileLoading(true);
+
+      // 1. Verifica localStorage primeiro (funciona mesmo sem permissão no Firestore)
+      const localProfileRaw = localStorage.getItem(`userProfile_${user.uid}`);
+      if (localProfileRaw) {
+        try {
+          const localProfile = JSON.parse(localProfileRaw) as UserProfile;
+          setUserProfile(localProfile);
+          setOnboardingNeeded(false);
+          setProfileLoading(false);
+          // Tenta sincronizar com Firestore em segundo plano
+          setDoc(doc(db, 'userProfiles', user.uid), localProfile).catch(() => {});
+          return;
+        } catch (_) {}
+      }
+
+      // 2. Tenta buscar no Firestore
       try {
         const profileRef = doc(db, 'userProfiles', user.uid);
         const profileSnap = await getDoc(profileRef);
         if (profileSnap.exists()) {
-          setUserProfile(profileSnap.data() as UserProfile);
+          const profile = profileSnap.data() as UserProfile;
+          setUserProfile(profile);
+          localStorage.setItem(`userProfile_${user.uid}`, JSON.stringify(profile));
           setOnboardingNeeded(false);
         } else {
-          // Novo usuário ou perfil não encontrado: mostrar onboarding
           setOnboardingNeeded(true);
         }
       } catch (e) {
-        console.error('Erro ao carregar perfil:', e);
-        // Se der erro de permissão ou rede, vamos assumir que precisa de onboarding para não travar
+        console.warn('Firestore indisponível, exibindo onboarding:', e);
         setOnboardingNeeded(true);
       } finally {
         setProfileLoading(false);
@@ -162,6 +178,7 @@ function App() {
     };
     checkProfile();
   }, [user]);
+
 
   useEffect(() => {
     // Check for reminders immediately on load
