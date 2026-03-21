@@ -19,18 +19,23 @@ const RichTextEditor: React.FC<RichTextEditorProps> = ({
   const contentRef = useRef<HTMLDivElement>(null);
   const [isFocused, setIsFocused] = useState(false);
 
-  // Sync with external value changes (e.g. clear form)
+  // Sync with external value changes (e.g. clear form or appending from audio transcription)
   useEffect(() => {
     if (contentRef.current) {
-      // Only update if the value is different to avoid cursor jumping
-      // This is primarily for when the form is cleared externally
       if (value !== contentRef.current.innerHTML) {
-         // If value is empty, clear it specifically
-         if (value === '') {
-           contentRef.current.innerHTML = '';
-         } else if (contentRef.current.innerHTML === '' && value) {
-           // Initial load or pasting content programmatically
-           contentRef.current.innerHTML = value;
+         contentRef.current.innerHTML = value;
+         
+         // If the user was dictating or the form updated externally, move cursor to the end 
+         // so they can continue typing naturally without jumping to the start.
+         if (document.activeElement === contentRef.current) {
+             const range = document.createRange();
+             const sel = window.getSelection();
+             range.selectNodeContents(contentRef.current);
+             range.collapse(false);
+             if (sel) {
+                 sel.removeAllRanges();
+                 sel.addRange(range);
+             }
          }
       }
     }

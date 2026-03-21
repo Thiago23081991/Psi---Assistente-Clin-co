@@ -427,6 +427,18 @@ const PatientCRM: React.FC = () => {
                                 <label className="block text-xs font-medium text-slate-700 mb-1">Hipótese Diagnóstica / Foco Clínico</label>
                                 <input type="text" value={editedPatient?.diagnosticHypothesis || ''} onChange={e => setEditedPatient(prev => prev ? {...prev, diagnosticHypothesis: e.target.value} : null)} className="w-full text-sm p-2 border border-slate-300 rounded focus:ring-teal-500 focus:border-teal-500 outline-none" placeholder="Ex: TAG, TDAH, Transtorno Misto..." />
                             </div>
+                            <div>
+                                <label className="block text-xs font-medium text-slate-700 mb-1">Altura (cm)</label>
+                                <input type="number" value={editedPatient?.height || ''} onChange={e => setEditedPatient(prev => prev ? {...prev, height: e.target.value} : null)} className="w-full text-sm p-2 border border-slate-300 rounded focus:ring-teal-500 focus:border-teal-500 outline-none" placeholder="Ex: 170" />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-medium text-slate-700 mb-1">Peso (kg)</label>
+                                <input type="number" value={editedPatient?.weight || ''} onChange={e => setEditedPatient(prev => prev ? {...prev, weight: e.target.value} : null)} className="w-full text-sm p-2 border border-slate-300 rounded focus:ring-teal-500 focus:border-teal-500 outline-none" placeholder="Ex: 70" />
+                            </div>
+                            <div className="col-span-1 md:col-span-2">
+                                <label className="block text-xs font-medium text-slate-700 mb-1">Contexto / Anamnese (Resumo)</label>
+                                <textarea value={editedPatient?.context || ''} onChange={e => setEditedPatient(prev => prev ? {...prev, context: e.target.value} : null)} className="w-full text-sm p-2 border border-slate-300 rounded focus:ring-teal-500 focus:border-teal-500 outline-none resize-y" placeholder="Histórico familiar, diagnósticos prévios, medicações..." rows={5} />
+                            </div>
                             <div className="col-span-1 md:col-span-2">
                                 <label className="block text-xs font-medium text-slate-700 mb-1">Status do Paciente</label>
                                 <select value={editedPatient?.status || 'active'} onChange={e => setEditedPatient(prev => prev ? {...prev, status: e.target.value as 'active'|'inactive'} : null)} className="w-full text-sm p-2 border border-slate-300 rounded focus:ring-teal-500 focus:border-teal-500 outline-none">
