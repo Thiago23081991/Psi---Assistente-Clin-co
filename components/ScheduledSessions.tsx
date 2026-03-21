@@ -37,13 +37,7 @@ const ScheduledSessions: React.FC<ScheduledSessionsProps> = ({ onStartSession })
   const [duration, setDuration] = useState(50);
   const [notes, setNotes] = useState('');
   const [isOnline, setIsOnline] = useState(false);
-
-  // Gera um link aleatório de Meet (formato padrão do Google Meet)
-  const generateMeetLink = () => {
-      const chars = 'abcdefghijklmnopqrstuvwxyz';
-      const segment = (length: number) => Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
-      return `https://meet.google.com/${segment(3)}-${segment(4)}-${segment(3)}`;
-  };
+  const [meetLink, setMeetLink] = useState('');
 
   // Fechar menu ao clicar fora
   useEffect(() => {
@@ -81,7 +75,7 @@ const ScheduledSessions: React.FC<ScheduledSessionsProps> = ({ onStartSession })
             time,
             duration,
             isOnline,
-            meetLink: isOnline && !existingSession.meetLink ? generateMeetLink() : (isOnline ? existingSession.meetLink : undefined),
+            meetLink: isOnline ? meetLink.trim() : '',
             notes: notes.trim()
         };
     } else {
@@ -94,17 +88,22 @@ const ScheduledSessions: React.FC<ScheduledSessionsProps> = ({ onStartSession })
             duration,
             status: 'scheduled',
             isOnline,
-            meetLink: isOnline ? generateMeetLink() : undefined,
+            meetLink: isOnline ? meetLink.trim() : '',
             reminderSent: false,
             notes: notes.trim()
         };
     }
 
-    await saveScheduledSession(sessionToSave);
-    handleCloseModal();
+    try {
+        await saveScheduledSession(sessionToSave);
+        handleCloseModal();
 
-    if (andSend) {
-        handleManualWhatsApp(sessionToSave, 'confirm');
+        if (andSend) {
+            handleManualWhatsApp(sessionToSave, 'confirm');
+        }
+    } catch (e) {
+        console.error("Erro ao salvar a sessão:", e);
+        alert("Ocorreu um erro ao salvar o agendamento. Tente novamente.");
     }
   };
 
@@ -116,6 +115,7 @@ const ScheduledSessions: React.FC<ScheduledSessionsProps> = ({ onStartSession })
     setDuration(session.duration);
     setNotes(session.notes || '');
     setIsOnline(session.isOnline || false);
+    setMeetLink(session.meetLink || '');
     setIsModalOpen(true);
   };
 
@@ -132,6 +132,7 @@ const ScheduledSessions: React.FC<ScheduledSessionsProps> = ({ onStartSession })
     setDuration(50);
     setNotes('');
     setIsOnline(false);
+    setMeetLink('');
   };
 
   const updateStatus = async (id: string, status: ScheduledSession['status']) => {
@@ -578,7 +579,7 @@ const ScheduledSessions: React.FC<ScheduledSessionsProps> = ({ onStartSession })
                   </div>
 
                   <div className="p-3 bg-blue-50/50 border border-blue-100 rounded-xl">
-                      <label className="flex items-center gap-3 cursor-pointer">
+                      <label className={`flex items-center gap-3 cursor-pointer ${isOnline ? 'mb-2' : ''}`}>
                           <input 
                               type="checkbox" 
                               checked={isOnline}
@@ -589,9 +590,20 @@ const ScheduledSessions: React.FC<ScheduledSessionsProps> = ({ onStartSession })
                               <span className="text-sm font-medium text-slate-800 flex items-center gap-2">
                                   <Video className="h-4 w-4 text-blue-600" /> Sessão Online
                               </span>
-                              <span className="text-xs text-slate-500">Um link do Google Meet será gerado automaticamente.</span>
+                              <span className="text-xs text-slate-500">Adicione o link da videochamada para o paciente.</span>
                           </div>
                       </label>
+                      {isOnline && (
+                          <div className="mt-3 pl-7">
+                              <input 
+                                  type="url" 
+                                  value={meetLink}
+                                  onChange={(e) => setMeetLink(e.target.value)}
+                                  placeholder="Cole o link da reunião (ex: Google Meet, Zoom)..."
+                                  className="w-full p-2.5 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                              />
+                          </div>
+                      )}
                   </div>
                   
                   <div>
@@ -606,6 +618,7 @@ const ScheduledSessions: React.FC<ScheduledSessionsProps> = ({ onStartSession })
 
                   <div className="flex flex-col gap-2 mt-4">
                       <button 
+                        type="button"
                         onClick={() => handleSave(true)}
                         disabled={!selectedPatientId || !date || !time}
                         className="w-full bg-green-600 text-white py-2.5 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 shadow-sm"
@@ -614,6 +627,7 @@ const ScheduledSessions: React.FC<ScheduledSessionsProps> = ({ onStartSession })
                           {editingSessionId ? 'Salvar e Avisar no WhatsApp' : 'Agendar e Enviar Link no WhatsApp'}
                       </button>
                       <button 
+                        type="button"
                         onClick={() => handleSave(false)}
                         disabled={!selectedPatientId || !date || !time}
                         className="w-full bg-slate-100 text-slate-600 py-2.5 rounded-lg font-medium hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
