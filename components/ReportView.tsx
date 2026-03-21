@@ -52,9 +52,24 @@ const ReportView: React.FC<ReportViewProps> = ({ report, doctorName = "Dr(a). Ps
       });
       
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const pdfPageHeight = pdf.internal.pageSize.getHeight();
+      const imgHeight = (canvas.height * pdfWidth) / canvas.width;
       
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      // Adiciona a primeira página
+      pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+      heightLeft -= pdfPageHeight;
+
+      // Se a imagem for maior que uma página A4, adiciona as demais páginas transladadas
+      while (heightLeft > 0) {
+        position -= pdfPageHeight; 
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+        heightLeft -= pdfPageHeight;
+      }
+      
       pdf.save(`Prontuario_Sessao_${new Date().getTime()}.pdf`);
     } catch (error) {
       console.error('Erro ao gerar PDF', error);
@@ -170,7 +185,7 @@ const ReportView: React.FC<ReportViewProps> = ({ report, doctorName = "Dr(a). Ps
          <div 
              ref={printRef}
              data-pdf-container="true"
-             className="bg-white p-6 md:p-12 shadow-md w-full max-w-[210mm] min-h-[297mm] mx-auto text-slate-800 break-words"
+             className="bg-white p-6 md:p-12 shadow-md w-[210mm] min-h-[297mm] mx-auto text-slate-800 break-words"
              style={{ 
                  fontFamily: '"Inter", sans-serif',
              }}

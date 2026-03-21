@@ -195,7 +195,7 @@ const PatientHistory: React.FC = () => {
             {/* Report Detail View */}
             {/* Mobile: Visible only if session selected. Desktop: Visible as details pane */}
             <div className={`
-                flex-1 flex-col overflow-y-auto bg-slate-50
+                flex-1 flex-col overflow-auto bg-slate-50
                 ${selectedSession ? 'flex fixed inset-0 z-50 bg-white lg:static lg:bg-slate-50' : 'hidden lg:flex'}
             `}>
                 {selectedSession ? (
