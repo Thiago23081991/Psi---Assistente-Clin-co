@@ -24,6 +24,11 @@ const InputForm: React.FC<InputFormProps> = ({
   const [approach, setApproach] = useState<string>(TherapeuticApproach.TCC);
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<any>(null);
+  const isListeningRef = useRef(false);
+
+  useEffect(() => {
+    isListeningRef.current = isListening;
+  }, [isListening]);
 
   useEffect(() => {
     // Initialize Web Speech API if supported
@@ -45,7 +50,7 @@ const InputForm: React.FC<InputFormProps> = ({
         // cursor position or interim vs final results better, but appending works for notes.
         if (event.results[event.results.length - 1].isFinal) {
            setNotes((prevNotes) => {
-               // Add a space if there's already text and it doesn't end with a space or newline
+               // Append text safely
                const separator = prevNotes && !prevNotes.match(/(\\s|<br>)$/) ? ' ' : '';
                return prevNotes + separator + currentTranscript;
            });
@@ -59,8 +64,13 @@ const InputForm: React.FC<InputFormProps> = ({
 
       recognitionRef.current.onend = () => {
         // Automatically restarts if we still want to be listening (handles short pauses)
-        if (isListening) {
-           recognitionRef.current?.start();
+        if (isListeningRef.current) {
+           try {
+             recognitionRef.current?.start();
+           } catch(e) {
+             console.error("Failed to restart recognition", e);
+             setIsListening(false);
+           }
         }
       };
     }
@@ -70,7 +80,7 @@ const InputForm: React.FC<InputFormProps> = ({
         recognitionRef.current.stop();
       }
     };
-  }, [isListening]);
+  }, []);
 
   const toggleListen = () => {
     if (isListening) {
