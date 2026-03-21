@@ -63,18 +63,14 @@ async function getAvailableModel(apiKey: string): Promise<string> {
 
 export const analyzeSessionNotes = async (request: AnalysisRequest): Promise<string> => {
   try {
-    const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string;
+    const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string;
+    const DEEPSEEK_API_KEY = import.meta.env.VITE_DEEPSEEK_API_KEY as string;
 
-    if (!API_KEY) {
-      return "⚠️ Chave de API (VITE_GEMINI_API_KEY) não encontrada. Configure-a nas variáveis de ambiente da Vercel e no arquivo .env.local.";
+    if (!GEMINI_API_KEY && !DEEPSEEK_API_KEY) {
+      return "⚠️ Nenhuma chave de API configurada. Configure VITE_GEMINI_API_KEY ou VITE_DEEPSEEK_API_KEY no arquivo .env.local.";
     }
 
-    // Descobre e faz o cache de qual modelo usar para esta chave para não gastar 2x a cota
-    const modelName = await getAvailableModel(API_KEY);
-    console.log(`[GeminiService] Usando modelo: ${modelName}`);
-
-    const prompt = `${SYSTEM_INSTRUCTION}
-
+    const userPrompt = `
         Analise as seguintes anotações da sessão clínica:
         
         --- INÍCIO DAS NOTAS ---
@@ -92,7 +88,42 @@ export const analyzeSessionNotes = async (request: AnalysisRequest): Promise<str
         ${request.templateStructure}
     `;
 
-    const generateUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${API_KEY}`;
+    // 1. Tenta usar o DeepSeek se a chave estiver configurada
+    if (DEEPSEEK_API_KEY) {
+        console.log(`[AIService] Usando DeepSeek API`);
+        const response = await fetch('https://api.deepseek.com/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${DEEPSEEK_API_KEY}`
+            },
+            body: JSON.stringify({
+                model: 'deepseek-chat',
+                messages: [
+                    { role: 'system', content: SYSTEM_INSTRUCTION },
+                    { role: 'user', content: userPrompt }
+                ],
+                temperature: 0.35,
+                max_tokens: 8192
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error?.message || `HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        return data.choices?.[0]?.message?.content || "Sem resposta do servidor DeepSeek.";
+    }
+
+    // 2. Fallback para Google Gemini
+    const modelName = await getAvailableModel(GEMINI_API_KEY);
+    console.log(`[GeminiService] Usando modelo: ${modelName}`);
+
+    const prompt = `${SYSTEM_INSTRUCTION}\n${userPrompt}`;
+
+    const generateUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${GEMINI_API_KEY}`;
     
     const response = await fetch(generateUrl, {
       method: 'POST',
