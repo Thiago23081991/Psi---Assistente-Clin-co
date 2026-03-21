@@ -185,19 +185,19 @@ const ReportView: React.FC<ReportViewProps> = ({ report, doctorName = "Dr(a). Ps
          <div 
              ref={printRef}
              data-pdf-container="true"
-             className="bg-white p-6 md:p-12 shadow-md w-[210mm] min-h-[297mm] mx-auto text-slate-800 break-words"
+             className="bg-white p-6 md:p-12 shadow-md w-full max-w-[210mm] min-h-[297mm] mx-auto text-slate-800 break-words"
              style={{ 
                  fontFamily: '"Inter", sans-serif',
              }}
          >
              
              {/* Simple Header for PDF */}
-             <div className="border-b-2 border-slate-800 pb-4 mb-8 flex justify-between items-end">
+             <div className="border-b-2 border-slate-800 pb-4 mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-2 sm:gap-0">
                 <div>
                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">PsiAI</h1>
                    <p className="text-sm text-slate-500 font-medium">Registro Clínico</p>
                 </div>
-                <div className="text-right">
+                <div className="text-left sm:text-right">
                    <p className="text-xs text-slate-400">Gerado eletronicamente em {new Date().toLocaleDateString('pt-BR')}</p>
                 </div>
              </div>
