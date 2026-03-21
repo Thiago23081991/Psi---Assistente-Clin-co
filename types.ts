@@ -84,3 +84,14 @@ export enum TherapeuticApproach {
   Fenomenologica = 'Fenomenológica-Existencial',
   Comportamental = 'Análise do Comportamento (ABA/Behaviorismo)'
 }
+
+export interface FinancialTransaction {
+  id: string;
+  type: 'income' | 'expense';
+  amount: number;
+  date: string; // YYYY-MM-DD
+  description: string;
+  patientId?: string; // Optional, for tying income to a patient
+  status: 'paid' | 'pending';
+  category?: string;
+}

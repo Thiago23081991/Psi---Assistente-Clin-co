@@ -6,6 +6,7 @@ import PatientHistory from './components/PatientHistory';
 import PatientCRM from './components/PatientCRM';
 import ScheduledSessions from './components/ScheduledSessions';
 import Remarketing from './components/Remarketing';
+import Financials from './components/Financials';
 import RichTextEditor from './components/RichTextEditor';
 import Auth from './components/Auth';
 import OnboardingProfession from './components/OnboardingProfession';
@@ -13,7 +14,7 @@ import { analyzeSessionNotes } from './services/geminiService';
 import { notificationService } from './services/notificationService';
 import { useData } from './contexts/DataContext';
 import { AnalysisRequest, ReportTemplate, Patient, SessionRecord, TherapeuticApproach, UserProfile } from './types';
-import { Plus, Users, History, Save, CalendarCheck, TrendingUp, BrainCircuit, Menu, X, FileText, LogOut, LayoutList } from 'lucide-react';
+import { Plus, Users, History, Save, CalendarCheck, TrendingUp, BrainCircuit, Menu, X, FileText, LogOut, LayoutList, Wallet } from 'lucide-react';
 import { auth } from './firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from './firebase';
@@ -109,7 +110,7 @@ Conduta, ajustes no tratamento, tarefas de casa e agendamento.`
   }
 ];
 
-type Tab = 'new' | 'crm' | 'history' | 'schedule' | 'remarketing';
+type Tab = 'new' | 'crm' | 'history' | 'schedule' | 'remarketing' | 'financial';
 
 function App() {
   const { user, patients, loading, savePatient, saveSession } = useData();
@@ -356,6 +357,7 @@ function App() {
           <NavItem icon={Users} label="CRM Pacientes" tab="crm" activeColor="text-blue-700 bg-blue-50" />
           <NavItem icon={CalendarCheck} label="Agenda" tab="schedule" />
           <NavItem icon={History} label="Consultar Histórico" tab="history" />
+          <NavItem icon={Wallet} label="Financeiro" tab="financial" activeColor="text-emerald-700 bg-emerald-50" />
           
           <div className="mt-8 mb-3 px-2">
             <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Marketing</div>
@@ -412,6 +414,7 @@ function App() {
               <NavItem icon={Users} label="CRM Pacientes" tab="crm" activeColor="text-blue-700 bg-blue-50" />
               <NavItem icon={CalendarCheck} label="Agenda" tab="schedule" />
               <NavItem icon={History} label="Histórico (Busca)" tab="history" />
+              <NavItem icon={Wallet} label="Financeiro" tab="financial" activeColor="text-emerald-700 bg-emerald-50" />
               <div className="my-4 border-t border-slate-100"></div>
               <NavItem icon={TrendingUp} label="Remarketing" tab="remarketing" activeColor="text-orange-700 bg-orange-50" />
             </div>
@@ -534,6 +537,10 @@ function App() {
 
             {activeTab === 'history' && (
                 <PatientHistory />
+            )}
+
+            {activeTab === 'financial' && (
+                <Financials />
             )}
 
             {activeTab === 'remarketing' && (

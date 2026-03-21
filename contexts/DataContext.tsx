@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { auth, db } from '../firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { collection, doc, onSnapshot, setDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
-import { Patient, SessionRecord, ScheduledSession } from '../types';
+import { Patient, SessionRecord, ScheduledSession, FinancialTransaction } from '../types';
 import { cryptoService } from '../services/cryptoService';
 
 interface DataContextType {
@@ -19,6 +19,10 @@ interface DataContextType {
   deleteScheduledSession: (id: string) => Promise<void>;
   updateScheduledSessionStatus: (id: string, status: ScheduledSession['status']) => Promise<void>;
   updateScheduledSessionReminder: (id: string, sent: boolean, sentAt?: string) => Promise<void>;
+  transactions: FinancialTransaction[];
+  loadingFinancials: boolean;
+  saveTransaction: (transaction: FinancialTransaction) => Promise<void>;
+  deleteTransaction: (id: string) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -28,7 +32,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [patients, setPatients] = useState<Patient[]>([]);
   const [sessions, setSessions] = useState<SessionRecord[]>([]);
   const [scheduledSessions, setScheduledSessions] = useState<ScheduledSession[]>([]);
+  const [transactions, setTransactions] = useState<FinancialTransaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingFinancials, setLoadingFinancials] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -37,7 +43,9 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setPatients([]);
         setSessions([]);
         setScheduledSessions([]);
+        setTransactions([]);
         setLoading(false);
+        setLoadingFinancials(false);
       }
     });
     return () => unsubscribe();
@@ -51,6 +59,7 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const patientsRef = collection(db, `users/${user.uid}/patients`);
     const sessionsRef = collection(db, `users/${user.uid}/sessions`);
     const scheduledRef = collection(db, `users/${user.uid}/scheduled_sessions`);
+    const transactionsRef = collection(db, `users/${user.uid}/transactions`);
 
     const unsubPatients = onSnapshot(patientsRef, async (snapshot) => {
       const data = await Promise.all(snapshot.docs.map(async (docSnap) => {
@@ -87,10 +96,24 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(false);
     });
 
+    const unsubTransactions = onSnapshot(transactionsRef, async (snapshot) => {
+      const data = await Promise.all(snapshot.docs.map(async (docSnap) => {
+          const t = docSnap.data() as FinancialTransaction;
+          return {
+              ...t,
+              // Decrypt description if present
+              description: t.description ? await cryptoService.decrypt(t.description, user.uid) : ''
+          };
+      }));
+      setTransactions(data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+      setLoadingFinancials(false);
+    });
+
     return () => {
       unsubPatients();
       unsubSessions();
       unsubScheduled();
+      unsubTransactions();
     };
   }, [user]);
 
@@ -177,12 +200,28 @@ export const DataProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const saveTransaction = async (transaction: FinancialTransaction) => {
+    if (!user) return;
+    const secureTx: FinancialTransaction = {
+      ...transaction,
+      description: await cryptoService.encrypt(transaction.description || '', user.uid)
+    };
+    await setDoc(doc(db, `users/${user.uid}/transactions/${secureTx.id}`), secureTx);
+  };
+
+  const deleteTransaction = async (id: string) => {
+    if (!user) return;
+    await deleteDoc(doc(db, `users/${user.uid}/transactions/${id}`));
+  };
+
   return (
     <DataContext.Provider value={{
       user, patients, sessions, scheduledSessions, loading,
+      transactions, loadingFinancials,
       savePatient, deletePatient, saveSession, deleteSession,
       saveScheduledSession, deleteScheduledSession,
-      updateScheduledSessionStatus, updateScheduledSessionReminder
+      updateScheduledSessionStatus, updateScheduledSessionReminder,
+      saveTransaction, deleteTransaction
     }}>
       {children}
     </DataContext.Provider>
