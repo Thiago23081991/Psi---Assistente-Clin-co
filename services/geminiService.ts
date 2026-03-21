@@ -16,41 +16,8 @@ DIRETRIZES ÉTICAS E DE SEGURANÇA (CRÍTICO):
 4. Mantenha tom técnico, empático e isento de julgamento moral.
 `;
 
-// Auto-detecta qual modelo está disponível para a chave de API fornecida
-async function getAvailableModel(apiKey: string): Promise<string> {
-  const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
-  const response = await fetch(listUrl);
-  if (!response.ok) {
-    throw new Error(`Falha ao listar modelos: ${response.status} ${response.statusText}`);
-  }
-  const data = await response.json();
-  const models: any[] = data.models || [];
-
-  // Filtra apenas modelos que suportam generateContent
-  const compatible = models.filter((m: any) =>
-    m.supportedGenerationMethods?.includes('generateContent')
-  );
-
-  if (compatible.length === 0) {
-    throw new Error("Nenhum modelo compatível com generateContent encontrado para sua chave de API.");
-  }
-
-  // Preferência de modelo em ordem (prioriza Flash por oferecer limite gratuito de 15 RPM e 1500 RPD)
-  const preferences = [
-    'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-2.5-pro', 'gemini-2.0-pro', 'gemini-1.5-pro', 'gemini-1.0-pro'
-  ];
-
-  for (const pref of preferences) {
-    const found = compatible.find((m: any) => m.name.includes(pref));
-    if (found) {
-      // O nome vem como "models/gemini-xxx", precisamos só de "gemini-xxx"
-      return found.name.replace('models/', '');
-    }
-  }
-
-  // Fallback: usa o primeiro disponível
-  return compatible[0].name.replace('models/', '');
-}
+// Modelo padrão definido para maximizar a cota gratuita e evitar requisições desnecessárias.
+const DEFAULT_MODEL = 'gemini-1.5-flash';
 
 export const analyzeSessionNotes = async (request: AnalysisRequest): Promise<string> => {
   try {
@@ -60,8 +27,8 @@ export const analyzeSessionNotes = async (request: AnalysisRequest): Promise<str
       return "⚠️ Chave de API (VITE_GEMINI_API_KEY) não encontrada. Configure-a nas variáveis de ambiente da Vercel e no arquivo .env.local.";
     }
 
-    // Descobre automaticamente qual modelo usar para esta chave
-    const modelName = await getAvailableModel(API_KEY);
+    // Usa o modelo mais leve e com maior limite gratuito primeiro
+    const modelName = DEFAULT_MODEL;
     console.log(`[GeminiService] Usando modelo: ${modelName}`);
 
     const prompt = `${SYSTEM_INSTRUCTION}
