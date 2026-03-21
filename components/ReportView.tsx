@@ -32,7 +32,16 @@ const ReportView: React.FC<ReportViewProps> = ({ report, doctorName = "Dr(a). Ps
         scale: 2,
         useCORS: true,
         logging: false,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        windowWidth: 850,
+        onclone: (clonedDoc) => {
+            const el = clonedDoc.querySelector('[data-pdf-container="true"]') as HTMLElement;
+            if (el) {
+                el.style.width = '800px';
+                el.style.maxWidth = '800px';
+                el.style.margin = '0';
+            }
+        }
       });
       
       const imgData = canvas.toDataURL('image/png');
@@ -156,11 +165,12 @@ const ReportView: React.FC<ReportViewProps> = ({ report, doctorName = "Dr(a). Ps
         </div>
       </div>
       
-      <div className="flex-1 overflow-y-auto bg-slate-200/50 p-4 md:p-8 flex justify-center">
+      <div className="flex-1 overflow-auto bg-slate-200/50 p-4 md:p-8 block">
          {/* A4 Paper wrapper for visual PDF context */}
          <div 
              ref={printRef}
-             className="bg-white p-8 md:p-12 shadow-md w-full max-w-[210mm] min-h-[297mm] mx-auto text-slate-800"
+             data-pdf-container="true"
+             className="bg-white p-6 md:p-12 shadow-md w-full max-w-[210mm] min-h-[297mm] mx-auto text-slate-800 break-words"
              style={{ 
                  fontFamily: '"Inter", sans-serif',
              }}
