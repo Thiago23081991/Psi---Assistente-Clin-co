@@ -16,8 +16,50 @@ DIRETRIZES ÉTICAS E DE SEGURANÇA (CRÍTICO):
 4. Mantenha tom técnico, empático e isento de julgamento moral.
 `;
 
-// Modelo padrão definido para maximizar a cota gratuita e evitar requisições desnecessárias.
-const DEFAULT_MODEL = 'gemini-1.5-flash';
+// Em memória para evitar gastar a cota listando os modelos a cada requisição
+let cachedModelName: string | null = null;
+
+async function getAvailableModel(apiKey: string): Promise<string> {
+  if (cachedModelName) return cachedModelName;
+
+  try {
+    const listUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
+    const response = await fetch(listUrl);
+    if (!response.ok) {
+      console.warn(`[GeminiService] Falha ao listar modelos (Status ${response.status}). Usando fallback padrão.`);
+      return 'gemini-1.5-flash-latest';
+    }
+    const data = await response.json();
+    const models: any[] = data.models || [];
+
+    const compatible = models.filter((m: any) =>
+      m.supportedGenerationMethods?.includes('generateContent')
+    );
+
+    const preferences = [
+      'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash', 'gemini-pro'
+    ];
+
+    for (const pref of preferences) {
+      const found = compatible.find((m: any) => m.name.includes(pref));
+      if (found) {
+        cachedModelName = found.name.replace('models/', '');
+        return cachedModelName;
+      }
+    }
+
+    if (compatible.length > 0) {
+      cachedModelName = compatible[0].name.replace('models/', '');
+      return cachedModelName;
+    }
+  } catch (e) {
+    console.error("[GeminiService] Erro na requisição de modelos", e);
+  }
+
+  // Fallback seguro caso tudo falhe ou não ache modelos, usando o nome legacy
+  return 'gemini-pro';
+}
+
 
 export const analyzeSessionNotes = async (request: AnalysisRequest): Promise<string> => {
   try {
@@ -27,8 +69,8 @@ export const analyzeSessionNotes = async (request: AnalysisRequest): Promise<str
       return "⚠️ Chave de API (VITE_GEMINI_API_KEY) não encontrada. Configure-a nas variáveis de ambiente da Vercel e no arquivo .env.local.";
     }
 
-    // Usa o modelo mais leve e com maior limite gratuito primeiro
-    const modelName = DEFAULT_MODEL;
+    // Descobre e faz o cache de qual modelo usar para esta chave para não gastar 2x a cota
+    const modelName = await getAvailableModel(API_KEY);
     console.log(`[GeminiService] Usando modelo: ${modelName}`);
 
     const prompt = `${SYSTEM_INSTRUCTION}
