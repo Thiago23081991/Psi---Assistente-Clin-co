@@ -463,7 +463,7 @@ const PatientCRM: React.FC = () => {
                                     <div>
                                         <div className="flex text-lg font-bold text-slate-800 items-center gap-2">
                                             <Calendar className="h-4 w-4 text-slate-400" />
-                                            Sessão de {new Date(session.date + 'T12:00:00').toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                                            Sessão de {new Date(session.date + (session.date.includes('T') ? '' : 'T12:00:00')).toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                                         </div>
                                         <div className="text-sm font-medium text-teal-600 mt-1 uppercase tracking-wider">{session.approach}</div>
                                     </div>
