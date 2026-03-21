@@ -35,9 +35,9 @@ async function getAvailableModel(apiKey: string): Promise<string> {
     throw new Error("Nenhum modelo compatível com generateContent encontrado para sua chave de API.");
   }
 
-  // Preferência de modelo em ordem (mais capaz para menos)
+  // Preferência de modelo em ordem (prioriza Flash por oferecer limite gratuito de 15 RPM e 1500 RPD)
   const preferences = [
-    'gemini-2.5', 'gemini-2.0', 'gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-1.0-pro', 'gemini-pro'
+    'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-2.5-pro', 'gemini-2.0-pro', 'gemini-1.5-pro', 'gemini-1.0-pro'
   ];
 
   for (const pref of preferences) {
