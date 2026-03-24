@@ -6,9 +6,10 @@ import jsPDF from 'jspdf';
 interface ReportViewProps {
   report: string | null;
   doctorName?: string;
+  profession?: 'psicologo' | 'terapeuta';
 }
 
-const ReportView: React.FC<ReportViewProps> = ({ report, doctorName = "Dr(a). Psicólogo" }) => {
+const ReportView: React.FC<ReportViewProps> = ({ report, doctorName = "Dr(a).", profession = 'psicologo' }) => {
   const [copied, setCopied] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [crp, setCrp] = useState(localStorage.getItem('psiAssistant_crp') || '');
@@ -209,8 +210,11 @@ const ReportView: React.FC<ReportViewProps> = ({ report, doctorName = "Dr(a). Ps
              <div className="mt-20 pt-8 border-t border-slate-200">
                 <div className="w-80 mx-auto border-b border-slate-800 mb-2"></div>
                 <p className="text-center text-base font-bold text-slate-800 uppercase">{doctorName}</p>
-                <p className="text-center text-sm font-semibold text-slate-600 mb-4">Psicólogo(a) Clínico(a) {crp && `- CRP: ${crp}`}</p>
-                <p className="text-center text-xs text-slate-500 mt-1">Este documento é confidencial e protegido por sigilo profissional.</p>
+                 <p className="text-center text-sm font-semibold text-slate-600 mb-4">
+                   {profession === 'terapeuta' ? 'Terapeuta Integrativo(a)' : 'Psicólogo(a) Clínico(a)'}
+                   {crp && ` - ${profession === 'terapeuta' ? 'CRT' : 'CRP'}: ${crp}`}
+                 </p>
+                 <p className="text-center text-xs text-slate-500 mt-1">Este documento é confidencial e protegido por sigilo profissional.</p>
              </div>
          </div>
       </div>
@@ -219,7 +223,7 @@ const ReportView: React.FC<ReportViewProps> = ({ report, doctorName = "Dr(a). Ps
       <div className="p-4 border-t border-slate-100 bg-slate-50 flex flex-col sm:flex-row justify-between items-center text-xs text-slate-500">
          <span className="mb-2 sm:mb-0">A validação e assinatura são responsabilidade exclusiva do profissional.</span>
          <div className="flex items-center gap-2">
-            <span className="font-medium text-slate-600">Seu CRP:</span>
+             <span className="font-medium text-slate-600">{profession === 'terapeuta' ? 'Seu CRT:' : 'Seu CRP:'}</span>
             <input 
               type="text" 
               placeholder="00/00000" 

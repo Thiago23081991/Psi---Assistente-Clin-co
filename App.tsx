@@ -495,7 +495,7 @@ function App() {
                         <div className="flex flex-col min-h-[500px] lg:min-h-[600px] relative">
                             {report ? (
                                 <>
-                                    <ReportView report={report} doctorName={user?.displayName || 'Dr(a).'} />
+                                    <ReportView report={report} doctorName={user?.displayName || 'Dr(a).'} profession={userProfile?.profession} />
                                     {isReportSaved && !isAnalyzing && (
                                         <div className="absolute top-4 right-4 bg-teal-100 text-teal-800 text-xs px-3 py-1.5 rounded-full flex items-center gap-1.5 animate-pulse shadow-sm z-10 font-medium">
                                             <Save className="h-3.5 w-3.5" /> Salvo no Histórico
